@@ -92,32 +92,39 @@ function SubmitAttestationPage({ onSubmitted }: { onSubmitted?: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [formResetKey, setFormResetKey] = useState(0);
 
+  const stored = getStoredSupplier();
+
+  // Must be signed in with a secret key to submit
+  if (!stored || !stored.secretKey) {
+    return (
+      <div>
+        <h2>Submit Attestation</h2>
+        <div className="card" style={{ textAlign: 'center', padding: '2.5rem' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '0.75rem' }}>🔒</div>
+          <h3 style={{ marginBottom: '0.5rem' }}>Sign In Required</h3>
+          <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>
+            {!stored
+              ? 'You must register or sign in before submitting attestations.'
+              : 'You are signed in as read-only. Provide your secret key in the Identity tab to enable signing.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   async function handleSubmit(data: AttestationFormData) {
     setSubmitting(true);
     setResult(null);
     setError(null);
 
     try {
-      const stored = getStoredSupplier();
-
-      let keyPair: nacl.SignKeyPair;
-      let pubKeyHex: string;
-      let supplierId: string;
-
-      if (stored) {
-        const secretKeyBytes = new Uint8Array(
-          (stored.secretKey.match(/.{1,2}/g) || []).map(b => parseInt(b, 16))
-        );
-        keyPair = { publicKey: secretKeyBytes.slice(32), secretKey: secretKeyBytes };
-        pubKeyHex = stored.publicKey;
-        supplierId = stored.id;
-      } else {
-        keyPair = nacl.sign.keyPair();
-        pubKeyHex = Array.from(keyPair.publicKey)
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('');
-        supplierId = pubKeyHex;
-      }
+      if (!stored || !stored.secretKey) return;
+      const secretKeyBytes = new Uint8Array(
+        (stored.secretKey.match(/.{1,2}/g) || []).map(b => parseInt(b, 16))
+      );
+      const keyPair: nacl.SignKeyPair = { publicKey: secretKeyBytes.slice(32), secretKey: secretKeyBytes };
+      const pubKeyHex = stored.publicKey;
+      const supplierId = stored.id;
 
       const payload = {
         productName: data.productName,
@@ -180,9 +187,7 @@ function SubmitAttestationPage({ onSubmitted }: { onSubmitted?: () => void }) {
       <h2>Submit Attestation</h2>
       <p>
         Compose and submit a digitally signed attestation for your supply chain step.
-        {getStoredSupplier()
-          ? ' Using registered supplier keypair.'
-          : ' Each submission generates a new Ed25519 keypair and signs the canonicalized payload.'}
+        Signing as <strong>{stored.name}</strong>.
       </p>
 
       {result && (

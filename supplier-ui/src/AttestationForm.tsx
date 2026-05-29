@@ -79,6 +79,8 @@ export function AttestationForm({ onSubmit, disabled = false, resetKey = 0 }: At
     setErrors({});
   }
 
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
   function validate(): FieldErrors {
     const newErrors: FieldErrors = {};
 
@@ -88,6 +90,8 @@ export function AttestationForm({ onSubmit, disabled = false, resetKey = 0 }: At
 
     if (!productId.trim()) {
       newErrors.productId = 'Product ID is required';
+    } else if (!UUID_REGEX.test(productId.trim())) {
+      newErrors.productId = 'Product ID must be a valid UUID';
     }
 
     if (!location) {
@@ -124,6 +128,8 @@ export function AttestationForm({ onSubmit, disabled = false, resetKey = 0 }: At
       const rowErrors: { attestationId?: string; quantityUsed?: string; unit?: string } = {};
       if (!ref.attestationId.trim()) {
         rowErrors.attestationId = 'Attestation ID is required';
+      } else if (!UUID_REGEX.test(ref.attestationId.trim())) {
+        rowErrors.attestationId = 'Must be a valid UUID';
       }
       const qty = parseFloat(ref.quantityUsed);
       if (ref.quantityUsed === '' || isNaN(qty)) {
