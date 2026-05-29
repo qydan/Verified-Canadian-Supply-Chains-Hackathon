@@ -390,6 +390,11 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                 </div>
                 <span className="chain-node-id">{attestation.id.slice(0, 8)}…</span>
               </div>
+              {/* Output and cost details */}
+              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', gap: '1rem' }}>
+                <span>Output: <strong>{attestation.outputQuantity} {attestation.outputUnit}</strong></span>
+                <span>Cost: <strong>${(attestation.materialCost + attestation.labourCost).toFixed(0)}</strong> (mat: ${attestation.materialCost} + lab: ${attestation.labourCost})</span>
+              </div>
               {attestation.inputs.length > 0 && (
                 <div className="chain-inputs">
                   {attestation.inputs.map((input, iIdx) => {
