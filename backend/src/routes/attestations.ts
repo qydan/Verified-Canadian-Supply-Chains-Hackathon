@@ -255,6 +255,62 @@ router.post('/', (req: Request, res: Response) => {
 });
 
 /**
+ * GET /attestations/search?q=...
+ *
+ * Searches attestations by product name, location, or supplier name.
+ * Returns matching attestations (limited to 50).
+ */
+router.get('/search', (req: Request, res: Response) => {
+  const db = req.app.get('db') as Database.Database | undefined;
+  if (!db) {
+    res.status(503).json({ error: 'Service temporarily unavailable' });
+    return;
+  }
+
+  const query = (req.query.q as string || '').trim();
+  if (!query) {
+    res.status(400).json({ error: 'Query parameter "q" is required' });
+    return;
+  }
+
+  const likePattern = `%${query}%`;
+
+  const rows = db.prepare(`
+    SELECT a.id, a.product_name, a.product_id, a.location, a.timestamp,
+           a.is_transformation, a.material_cost, a.labour_cost
+    FROM attestations a
+    LEFT JOIN suppliers s ON a.supplier_id = s.id
+    WHERE a.product_name LIKE ?
+       OR a.location LIKE ?
+       OR s.name LIKE ?
+    ORDER BY a.timestamp DESC
+    LIMIT 50
+  `).all(likePattern, likePattern, likePattern) as Array<{
+    id: string;
+    product_name: string;
+    product_id: string;
+    location: string;
+    timestamp: string;
+    is_transformation: number;
+    material_cost: number;
+    labour_cost: number;
+  }>;
+
+  const results = rows.map((r) => ({
+    id: r.id,
+    productName: r.product_name,
+    productId: r.product_id,
+    location: r.location,
+    timestamp: r.timestamp,
+    isTransformation: r.is_transformation === 1,
+    materialCost: r.material_cost,
+    labourCost: r.labour_cost,
+  }));
+
+  res.status(200).json(results);
+});
+
+/**
  * GET /attestations/:id
  *
  * Returns a single attestation by its UUID id.

@@ -688,3 +688,30 @@ code {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* --- Print Styles for Report Export --- */
+@media print {
+  .app-header, .app-nav, .app-footer, .btn {
+    display: none !important;
+  }
+
+  .app-main {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .app-layout {
+    min-height: auto;
+  }
+
+  .card, .stats-card, .progress-bar-container, .product-info, .chain-node {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .designation-banner {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

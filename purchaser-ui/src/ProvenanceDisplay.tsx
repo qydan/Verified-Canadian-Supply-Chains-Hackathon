@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { SupplyChainMap } from './SupplyChainMap';
+import { CostPieChart } from './CostPieChart';
+import { ThresholdGauge } from './ThresholdGauge';
+import { ChainTimeline } from './ChainTimeline';
 
 // ============================================================================
 // Helpers
@@ -220,6 +223,12 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
         </div>
       </div>
 
+      {/* Threshold Gauge */}
+      <ThresholdGauge percent={report.canadianContentPercent} designation={report.designation} />
+
+      {/* Cost by Country Pie Chart */}
+      <CostPieChart chain={report.chain} />
+
       {/* Product Info */}
       <div className="product-info" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
         <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -256,11 +265,17 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
       {/* Supply Chain Map */}
       <SupplyChainMap chain={report.chain} />
 
+      {/* Chain of Custody Timeline */}
+      <ChainTimeline chain={report.chain} />
+
       {/* Supply Chain Visualization */}
       <SupplyChainVisualization chain={report.chain} />
 
       {/* Actions */}
-      <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+      <div style={{ marginTop: '2rem', textAlign: 'center', display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+        <button onClick={() => window.print()} className="btn btn-secondary">
+          📄 Export Report
+        </button>
         <button onClick={onScanAgain} className="btn btn-primary">
           Scan Another Product
         </button>
@@ -359,6 +374,9 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                   {attestation.isTransformation && (
                     <span className="badge badge-transform">transformation</span>
                   )}
+                  <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', marginLeft: '0.35rem' }}>
+                    ✓ verified
+                  </span>
                 </div>
                 <span className="chain-node-id">{attestation.id.slice(0, 8)}…</span>
               </div>

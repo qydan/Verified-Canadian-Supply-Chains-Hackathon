@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { QRScanner } from './QRScanner';
 import { ProvenanceDisplay } from './ProvenanceDisplay';
+import { SearchPage } from './SearchPage';
 
-type Page = 'scan' | 'report';
+type Page = 'scan' | 'report' | 'search';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('scan');
@@ -32,7 +33,13 @@ function App() {
           onClick={handleScanAgain}
           className={`nav-btn ${currentPage === 'scan' ? 'active' : ''}`}
         >
-          Scan QR Code
+          Scan / Lookup
+        </button>
+        <button
+          onClick={() => setCurrentPage('search')}
+          className={`nav-btn ${currentPage === 'search' ? 'active' : ''}`}
+        >
+          Search
         </button>
         <button
           onClick={() => setCurrentPage('report')}
@@ -48,11 +55,11 @@ function App() {
           {currentPage === 'scan' && (
             <ScanPage onProductScanned={handleProductScanned} />
           )}
+          {currentPage === 'search' && (
+            <SearchPage onProductSelected={handleProductScanned} />
+          )}
           {currentPage === 'report' && (
-            <ReportPage
-              productId={scannedProductId}
-              onScanAgain={handleScanAgain}
-            />
+            <ReportPage productId={scannedProductId} onScanAgain={handleScanAgain} />
           )}
         </div>
       </main>
@@ -84,9 +91,7 @@ function ScanPage({ onProductScanned }: { onProductScanned: (id: string) => void
   return (
     <div>
       <h2>Scan Product QR Code</h2>
-      <p>
-        Use your device camera to scan a product QR code, or enter a product ID manually.
-      </p>
+      <p>Use your device camera to scan a product QR code, or enter a product ID manually.</p>
 
       <div style={{ marginBottom: '2rem' }}>
         <QRScanner onProductScanned={onProductScanned} />
@@ -103,15 +108,9 @@ function ScanPage({ onProductScanned }: { onProductScanned: (id: string) => void
             className="form-input"
             style={{ flex: 1 }}
           />
-          <button type="submit" className="btn btn-primary">
-            Look Up
-          </button>
+          <button type="submit" className="btn btn-primary">Look Up</button>
         </form>
-        {error && (
-          <p className="form-error-text" style={{ marginTop: '0.5rem' }}>
-            {error}
-          </p>
-        )}
+        {error && <p className="form-error-text" style={{ marginTop: '0.5rem' }}>{error}</p>}
       </div>
     </div>
   );
@@ -123,9 +122,7 @@ function ReportPage({ productId, onScanAgain }: { productId: string | null; onSc
       <div style={{ textAlign: 'center', padding: '3rem' }}>
         <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📦</p>
         <p>No product scanned yet.</p>
-        <button onClick={onScanAgain} className="btn btn-primary">
-          Scan a Product
-        </button>
+        <button onClick={onScanAgain} className="btn btn-primary">Scan a Product</button>
       </div>
     );
   }
