@@ -45,11 +45,17 @@ export function SupplierDashboard() {
 
     fetch(`/api/suppliers/${supplier.id}/attestations`)
       .then((res) => {
+        if (res.status === 404) {
+          // Supplier no longer exists in DB (likely after a reset)
+          setAttestations([]);
+          setLoading(false);
+          return null;
+        }
         if (!res.ok) throw new Error(`Failed to load (${res.status})`);
         return res.json();
       })
       .then((data) => {
-        setAttestations(data);
+        if (data) setAttestations(data);
         setLoading(false);
       })
       .catch((err) => {
