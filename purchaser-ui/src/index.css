@@ -700,23 +700,96 @@ code {
     display: none !important;
   }
 
-  .app-main {
-    max-width: 100%;
-    padding: 0;
+  /* Hide interactive elements that don't belong in a report */
+  .qr-scanner-container,
+  .qr-scanner-hint {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    font-size: 11pt;
   }
 
   .app-layout {
     min-height: auto;
   }
 
-  .card, .stats-card, .progress-bar-container, .product-info, .chain-node {
-    box-shadow: none;
-    break-inside: avoid;
+  .app-main {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
   }
 
+  /* Report header - shown only in print */
+  .print-report-header {
+    display: block !important;
+    text-align: center;
+    border-bottom: 2px solid #1e293b;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .print-report-header h1 {
+    font-size: 18pt;
+    margin: 0 0 0.25rem;
+  }
+
+  .print-report-header p {
+    font-size: 9pt;
+    color: #64748b;
+    margin: 0;
+  }
+
+  /* Force colors */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
+  }
+
+  /* Clean up cards for print */
+  .card, .stats-card, .progress-bar-container, .product-info, .chain-node {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    break-inside: avoid;
+  }
+
+  /* Designation banner */
+  .designation-banner {
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  /* Chain nodes - more compact */
+  .chain-node {
+    padding: 0.5rem 0.75rem !important;
+    margin-bottom: 0.25rem;
+  }
+
+  .chain-arrow {
+    font-size: 0.9rem;
+    padding: 0.1rem 0;
+  }
+
+  /* Page breaks */
+  h3 {
+    break-after: avoid;
+  }
+
+  /* Footer with generation info */
+  .print-report-footer {
+    display: block !important;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 8pt;
+    color: #94a3b8;
+    text-align: center;
+  }
+
+  /* Reduce spacing */
+  .fade-in {
+    animation: none !important;
   }
 }
