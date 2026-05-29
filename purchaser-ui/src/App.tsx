@@ -104,7 +104,7 @@ function ScanPage({ onProductScanned }: { onProductScanned: (id: string) => void
             type="text"
             value={manualId}
             onChange={(e) => setManualId(e.target.value)}
-            placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+            placeholder="Product ID (e.g. a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d)"
             className="form-input"
             style={{ flex: 1 }}
           />
