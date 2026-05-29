@@ -1,0 +1,10 @@
+{
+  "name": "cryptographic-provenance",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "supplier-ui",
+    "purchaser-ui"
+  ]
+}

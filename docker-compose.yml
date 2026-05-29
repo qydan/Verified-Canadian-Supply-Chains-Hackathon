@@ -1,0 +1,48 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8080/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - provenance-net
+
+  supplier-ui:
+    build:
+      context: ./supplier-ui
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - provenance-net
+
+  purchaser-ui:
+    build:
+      context: ./purchaser-ui
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - provenance-net
+
+volumes:
+  backend-data:
+
+networks:
+  provenance-net:
+    driver: bridge
