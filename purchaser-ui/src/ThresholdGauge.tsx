@@ -90,10 +90,8 @@ export function ThresholdGauge({ percent, designation }: ThresholdGaugeProps) {
 
       {/* Threshold labels below */}
       <div style={{ position: 'relative', height: '1.2rem', fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
-        <span style={{ position: 'absolute', left: 0 }}>0%</span>
         <span style={{ position: 'absolute', left: '51%', transform: 'translateX(-50%)' }}>51%</span>
-        <span style={{ position: 'absolute', left: '98%', transform: 'translateX(-50%)' }}>98%</span>
-        <span style={{ position: 'absolute', right: 0 }}>100%</span>
+        <span style={{ position: 'absolute', left: '98%', transform: 'translateX(-100%)' }}>98%</span>
       </div>
 
       {/* Current value + hint */}

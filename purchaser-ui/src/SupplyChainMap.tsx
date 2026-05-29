@@ -57,11 +57,8 @@ interface MapNode {
 }
 
 function countryFlag(code: string): string {
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map((char) => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+  const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
+  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
 }
 
 // ============================================================================
@@ -186,7 +183,7 @@ export function SupplyChainMap({ chain }: SupplyChainMapProps) {
                   y={-16}
                   style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', fontWeight: 600, fill: '#1e293b', pointerEvents: 'none' }}
                 >
-                  {countryFlag(node.country)} {node.country}
+                  {countryFlag(node.country)}
                 </text>
                 <text
                   textAnchor="middle"
@@ -218,7 +215,7 @@ export function SupplyChainMap({ chain }: SupplyChainMapProps) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <strong style={{ fontSize: '0.85rem' }}>
-                {countryFlag(selectedNode.country)} {selectedNode.country} — {selectedNode.attestations.length} attestation(s)
+                {countryFlag(selectedNode.country)} — {selectedNode.attestations.length} attestation(s)
               </strong>
               <button
                 onClick={() => setSelectedNode(null)}

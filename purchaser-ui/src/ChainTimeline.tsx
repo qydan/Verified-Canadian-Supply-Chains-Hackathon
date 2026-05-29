@@ -14,7 +14,7 @@ interface ChainTimelineProps {
 
 function countryFlag(code: string): string {
   const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
 }
 
 export function ChainTimeline({ chain }: ChainTimelineProps) {
@@ -72,7 +72,7 @@ export function ChainTimeline({ chain }: ChainTimelineProps) {
                       {att.productName}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>
-                      {countryFlag(att.location)} {att.location}
+                      {countryFlag(att.location)}
                       {att.isTransformation && <span style={{ marginLeft: '0.5rem', color: 'var(--color-primary)' }}>⚙ transformation</span>}
                       <span style={{ marginLeft: '0.5rem' }}>• ${(att.materialCost + att.labourCost).toFixed(0)}</span>
                     </div>

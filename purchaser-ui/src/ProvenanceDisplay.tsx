@@ -14,7 +14,7 @@ function countryFlag(code: string): string {
     .toUpperCase()
     .split('')
     .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
 }
 
 // ============================================================================
@@ -210,7 +210,7 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
           <strong>${report.canadianDirectCosts.toFixed(2)}</strong>
         </div>
         <div className="progress-labels" style={{ marginBottom: '0.35rem' }}>
-          <span>🇨🇦 Canadian ({report.canadianContentPercent.toFixed(2)}%)</span>
+          <span>Canadian ({report.canadianContentPercent.toFixed(2)}%)</span>
           <span>Non-Canadian ({(100 - report.canadianContentPercent).toFixed(2)}%)</span>
         </div>
         <div className="progress-bar-track">
@@ -369,7 +369,7 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                 <div>
                   <span className="chain-node-name">{attestation.productName}</span>
                   <span className="badge badge-location">
-                    {countryFlag(attestation.location)} {attestation.location}
+                    {countryFlag(attestation.location)}
                   </span>
                   {attestation.isTransformation && (
                     <span className="badge badge-transform">transformation</span>

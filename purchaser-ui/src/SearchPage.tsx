@@ -17,7 +17,7 @@ interface SearchPageProps {
 
 function countryFlag(code: string): string {
   const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
+  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
 }
 
 export function SearchPage({ onProductSelected }: SearchPageProps) {
@@ -98,7 +98,7 @@ export function SearchPage({ onProductSelected }: SearchPageProps) {
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
                       {attestations.length} attestation(s) •
-                      {' '}{[...new Set(attestations.map((a) => a.location))].map((loc) => `${countryFlag(loc)} ${loc}`).join(', ')}
+                      {' '}{[...new Set(attestations.map((a) => a.location))].map((loc) => countryFlag(loc)).join(', ')}
                     </div>
                   </div>
                   <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); onProductSelected(productId); }}>
