@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Flag } from './Flag';
 
 interface SearchResult {
   id: string;
@@ -15,10 +16,7 @@ interface SearchPageProps {
   onProductSelected: (productId: string) => void;
 }
 
-function countryFlag(code: string): string {
-  const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
-}
+// Flag component used instead
 
 export function SearchPage({ onProductSelected }: SearchPageProps) {
   const [query, setQuery] = useState('');
@@ -98,7 +96,9 @@ export function SearchPage({ onProductSelected }: SearchPageProps) {
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
                       {attestations.length} attestation(s) •
-                      {' '}{[...new Set(attestations.map((a) => a.location))].map((loc) => countryFlag(loc)).join(', ')}
+                      {' '}{[...new Set(attestations.map((a) => a.location))].map((loc) => (
+                        <Flag key={loc} code={loc} />
+                      ))}
                     </div>
                   </div>
                   <button className="btn btn-primary btn-sm" onClick={(e) => { e.stopPropagation(); onProductSelected(productId); }}>

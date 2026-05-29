@@ -1,3 +1,5 @@
+import { Flag } from './Flag';
+
 interface Attestation {
   id: string;
   productName: string;
@@ -12,10 +14,7 @@ interface ChainTimelineProps {
   chain: Attestation[];
 }
 
-function countryFlag(code: string): string {
-  const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
-}
+// Flag component used instead
 
 export function ChainTimeline({ chain }: ChainTimelineProps) {
   if (chain.length === 0) return null;
@@ -72,7 +71,7 @@ export function ChainTimeline({ chain }: ChainTimelineProps) {
                       {att.productName}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '0.15rem' }}>
-                      {countryFlag(att.location)}
+                      <Flag code={att.location} />
                       {att.isTransformation && <span style={{ marginLeft: '0.5rem', color: 'var(--color-primary)' }}>⚙ transformation</span>}
                       <span style={{ marginLeft: '0.5rem' }}>• ${(att.materialCost + att.labourCost).toFixed(0)}</span>
                     </div>

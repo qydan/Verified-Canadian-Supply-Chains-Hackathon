@@ -6,6 +6,7 @@ import {
   Marker,
   Line,
 } from 'react-simple-maps';
+import { Flag } from './Flag';
 
 // ============================================================================
 // Country coordinates
@@ -57,8 +58,7 @@ interface MapNode {
 }
 
 function countryFlag(code: string): string {
-  const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
+  return code.toUpperCase();
 }
 
 // ============================================================================
@@ -215,7 +215,7 @@ export function SupplyChainMap({ chain }: SupplyChainMapProps) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <strong style={{ fontSize: '0.85rem' }}>
-                {countryFlag(selectedNode.country)} — {selectedNode.attestations.length} attestation(s)
+                <Flag code={selectedNode.country} /> — {selectedNode.attestations.length} attestation(s)
               </strong>
               <button
                 onClick={() => setSelectedNode(null)}

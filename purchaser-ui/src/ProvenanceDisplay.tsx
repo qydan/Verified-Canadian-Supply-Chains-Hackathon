@@ -4,18 +4,13 @@ import { SupplyChainMap } from './SupplyChainMap';
 import { CostPieChart } from './CostPieChart';
 import { ThresholdGauge } from './ThresholdGauge';
 import { ChainTimeline } from './ChainTimeline';
+import { Flag } from './Flag';
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function countryFlag(code: string): string {
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints) + ' ' + code.toUpperCase();
-}
+// countryFlag replaced by Flag component
 
 // ============================================================================
 // Types (mirroring backend ProvenanceReport shape)
@@ -369,7 +364,7 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                 <div>
                   <span className="chain-node-name">{attestation.productName}</span>
                   <span className="badge badge-location">
-                    {countryFlag(attestation.location)}
+                    <Flag code={attestation.location} />
                   </span>
                   {attestation.isTransformation && (
                     <span className="badge badge-transform">transformation</span>
