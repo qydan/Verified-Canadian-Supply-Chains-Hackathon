@@ -448,21 +448,35 @@ async function main() {
   console.log('');
 
   // =========================================================================
-  // Chain 7: ANOMALY — Replay Attack (same battery used in two products)
+  // Chain 7: ANOMALY — Replay Attack (same component claimed by two products)
   // Triggers REPLAY_DETECTED when the same input is used across products
   // =========================================================================
-  console.log('⚠️  Chain 7: ANOMALY — Replay Attack (shared battery across products)');
+  console.log('⚠️  Chain 7: ANOMALY — Replay Attack (component double-counted)');
 
   const replayDroneId = '17a8b9c0-d1e2-4f3a-4b5c-6d7e8f901234';
+  const replayDrone2Id = '27b9c0d1-e2f3-4a4b-5c6d-000000000000';
 
-  // This drone reuses cnBattery from Chain 2 (cargoDroneId) — cross-product replay!
+  // A shared motor set — produced once
+  const sharedMotor = await submit(bcPrecision, bcPrecisionId,
+    p('Shared Motor Set (fraudulent)', replayDroneId, bcPrecisionId, 'CA', 200, 120, 5, 'sets', daysAgo(12), true));
+
+  // First drone uses it legitimately
   const replayFrame = await submit(prairieCarbon, prairieCarbonId,
-    p('Lightweight Recon Frame', replayDroneId, prairieCarbonId, 'CA', 180, 100, 10, 'units', daysAgo(8), true));
+    p('Lightweight Recon Frame', replayDroneId, prairieCarbonId, 'CA', 180, 100, 10, 'units', daysAgo(10), true));
 
   await submit(mapleDrone, mapleDroneId,
-    p('Counterfeit Scout Drone', replayDroneId, mapleDroneId, 'CA', 30, 200, 1, 'units', daysAgo(5), true,
+    p('Scout Drone Alpha', replayDroneId, mapleDroneId, 'CA', 30, 200, 1, 'units', daysAgo(8), true,
       [{ attestationId: replayFrame.id, quantityUsed: 1, unit: 'units' },
-       { attestationId: cnBattery.id, quantityUsed: 1, unit: 'units' }]));
+       { attestationId: sharedMotor.id, quantityUsed: 1, unit: 'sets' }]));
+
+  // Second drone ALSO claims the same motor — replay/double-count!
+  const replayFrame2 = await submit(prairieCarbon, prairieCarbonId,
+    p('Lightweight Recon Frame B', replayDrone2Id, prairieCarbonId, 'CA', 180, 100, 10, 'units', daysAgo(7), true));
+
+  await submit(mapleDrone, mapleDroneId,
+    p('Scout Drone Beta (fraudulent)', replayDrone2Id, mapleDroneId, 'CA', 30, 200, 1, 'units', daysAgo(5), true,
+      [{ attestationId: replayFrame2.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: sharedMotor.id, quantityUsed: 1, unit: 'sets' }]));
 
   console.log('');
 
@@ -496,7 +510,7 @@ async function main() {
   console.log(`  🛡️  Made in Canada — Defence VTOL (12):       ${defenceDroneId}`);
   console.log(`  🌾 Product of Canada — Agri Drone (6):       ${agriDroneId}`);
   console.log(`  🚢 Made in Canada — Maritime Drone (9):      ${maritimeDroneId}`);
-  console.log(`  ⚠️  ANOMALY — Replay Attack:                  ${replayDroneId}`);
+  console.log(`  ⚠️  ANOMALY — Replay Attack:                  ${replayDroneId} and ${replayDrone2Id}`);
   console.log(`  ⚠️  ANOMALY — Quantity Exceeded:              ${quantityDroneId}`);
   console.log('');
   console.log('Countries represented: CA, US, CN, DE, JP, KR, GB, IL, FR, IN, TW');
