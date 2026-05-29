@@ -368,50 +368,136 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
   const idToIndex = new Map<string, number>();
   chain.forEach((att, idx) => idToIndex.set(att.id, idx));
 
+  // Calculate total consumed for each attestation
+  const totalConsumed = new Map<string, number>();
+  for (const att of chain) {
+    for (const input of att.inputs) {
+      totalConsumed.set(input.attestationId, (totalConsumed.get(input.attestationId) || 0) + input.quantityUsed);
+    }
+  }
+
+  // Group nodes by depth (BFS from leaves)
+  const depths = new Map<string, number>();
+  const childMap = new Map<string, string[]>(); // parent -> children who consume it
+
+  for (const att of chain) {
+    for (const input of att.inputs) {
+      if (!childMap.has(input.attestationId)) childMap.set(input.attestationId, []);
+      childMap.get(input.attestationId)!.push(att.id);
+    }
+  }
+
+  // Assign depth: nodes with no inputs are depth 0
+  function getDepth(id: string, visited: Set<string>): number {
+    if (depths.has(id)) return depths.get(id)!;
+    if (visited.has(id)) return 0;
+    visited.add(id);
+    const att = chain[idToIndex.get(id)!];
+    if (!att || att.inputs.length === 0) {
+      depths.set(id, 0);
+      return 0;
+    }
+    const maxParentDepth = Math.max(...att.inputs.map((inp) => getDepth(inp.attestationId, visited)));
+    const d = maxParentDepth + 1;
+    depths.set(id, d);
+    return d;
+  }
+  for (const att of chain) getDepth(att.id, new Set());
+
+  const maxDepth = Math.max(...Array.from(depths.values()));
+
+  // Group by depth
+  const layers: Attestation[][] = [];
+  for (let d = 0; d <= maxDepth; d++) layers.push([]);
+  for (const att of chain) {
+    const d = depths.get(att.id) || 0;
+    layers[d].push(att);
+  }
+
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <h3 style={{ marginBottom: '0.75rem' }}>Supply Chain</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-        {chain.map((attestation, idx) => (
-          <div key={attestation.id}>
-            <div className={`chain-node ${attestation.isTransformation ? 'transformation' : ''}`}>
-              <div className="chain-node-header">
-                <div>
-                  <span className="chain-node-name">{attestation.productName}</span>
-                  <span className="badge badge-location">
-                    <Flag code={attestation.location} />
-                  </span>
-                  {attestation.isTransformation && (
-                    <span className="badge badge-transform">transformation</span>
-                  )}
-                  <span className="badge" style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #a7f3d0', marginLeft: '0.35rem' }}>
-                    ✓ verified
-                  </span>
-                </div>
-                <span className="chain-node-id">{attestation.id.slice(0, 8)}…</span>
-              </div>
-              {/* Output and cost details */}
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', gap: '1rem' }}>
-                <span>Output: <strong>{attestation.outputQuantity} {attestation.outputUnit}</strong></span>
-                <span>Cost: <strong>${(attestation.materialCost + attestation.labourCost).toFixed(0)}</strong> (mat: ${attestation.materialCost} + lab: ${attestation.labourCost})</span>
-              </div>
-              {attestation.inputs.length > 0 && (
-                <div className="chain-inputs">
-                  {attestation.inputs.map((input, iIdx) => {
-                    const sourceIdx = idToIndex.get(input.attestationId);
-                    const sourceAtt = sourceIdx !== undefined ? chain[sourceIdx] : null;
-                    return (
-                      <span key={iIdx} className="chain-input-tag">
-                        ← {sourceAtt ? sourceAtt.productName : input.attestationId.slice(0, 8) + '…'}
-                        {' '}({input.quantityUsed} {input.unit})
+      <div style={{
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '1.25rem',
+        boxShadow: 'var(--shadow-sm)',
+        overflowX: 'auto',
+      }}>
+        {layers.map((layer, layerIdx) => (
+          <div key={layerIdx}>
+            {/* Layer of nodes */}
+            <div style={{
+              display: 'flex',
+              gap: '0.75rem',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+            }}>
+              {layer.map((att) => {
+                const consumed = totalConsumed.get(att.id) || 0;
+                const remaining = att.outputQuantity - consumed;
+                const overConsumed = consumed > att.outputQuantity;
+                const isCanadian = att.location === 'CA';
+
+                return (
+                  <div key={att.id} style={{
+                    border: `2px solid ${overConsumed ? '#ef4444' : isCanadian ? '#10b981' : '#6366f1'}`,
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.6rem 0.8rem',
+                    background: isCanadian ? '#f0fdf4' : '#f8fafc',
+                    minWidth: '180px',
+                    maxWidth: '240px',
+                    fontSize: '0.75rem',
+                  }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.8rem', marginBottom: '0.25rem', lineHeight: 1.2 }}>
+                      {att.productName}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
+                      <span className="badge badge-location" style={{ fontSize: '0.65rem' }}>
+                        <Flag code={att.location} />
                       </span>
-                    );
-                  })}
-                </div>
-              )}
+                      {att.isTransformation && (
+                        <span className="badge badge-transform" style={{ fontSize: '0.65rem' }}>⚙ transform</span>
+                      )}
+                    </div>
+                    <div style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>
+                      <div>Produced: <strong>{att.outputQuantity} {att.outputUnit}</strong></div>
+                      <div>${(att.materialCost + att.labourCost).toLocaleString()} CAD</div>
+                      {consumed > 0 && (
+                        <div style={{ marginTop: '0.2rem' }}>
+                          <div style={{ height: '4px', borderRadius: '2px', background: 'var(--color-border)', overflow: 'hidden' }}>
+                            <div style={{
+                              height: '100%',
+                              width: `${Math.min(100, (consumed / att.outputQuantity) * 100)}%`,
+                              background: overConsumed ? '#ef4444' : '#10b981',
+                            }} />
+                          </div>
+                          <div style={{ fontSize: '0.65rem', marginTop: '0.1rem', color: overConsumed ? '#ef4444' : 'var(--color-text-muted)' }}>
+                            {overConsumed
+                              ? `⚠ Over-consumed by ${Math.abs(remaining)}`
+                              : `${consumed}/${att.outputQuantity} used • ${remaining} remaining`}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            {idx < chain.length - 1 && (
-              <div className="chain-arrow">↓</div>
+
+            {/* Arrows between layers */}
+            {layerIdx < layers.length - 1 && (
+              <div style={{ textAlign: 'center', padding: '0.4rem 0', color: 'var(--color-text-muted)' }}>
+                <svg width="100%" height="24" style={{ display: 'block' }}>
+                  <defs>
+                    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                      <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+                    </marker>
+                  </defs>
+                  <line x1="50%" y1="2" x2="50%" y2="20" stroke="#94a3b8" strokeWidth="2" markerEnd="url(#arrowhead)" />
+                </svg>
+              </div>
             )}
           </div>
         ))}
