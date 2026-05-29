@@ -153,19 +153,8 @@ export function SupplierRegistration() {
               <div><strong>Public Key:</strong> <code style={{ wordBreak: 'break-all' }}>{stored.publicKey}</code></div>
               <div><strong>Location:</strong> {stored.location}</div>
               {stored.secretKey && (
-                <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'var(--color-border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem' }}>
-                  <div><strong>Signing:</strong> Active — attestations will be signed with your private key</div>
-                  <details style={{ marginTop: '0.5rem' }}>
-                    <summary style={{ cursor: 'pointer', color: 'var(--color-primary)', fontWeight: 500 }}>
-                      Show Secret Key (for backup / sign-in on another device)
-                    </summary>
-                    <code style={{ display: 'block', marginTop: '0.4rem', wordBreak: 'break-all', fontSize: '0.7rem', padding: '0.5rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
-                      {stored.secretKey}
-                    </code>
-                    <p style={{ margin: '0.4rem 0 0', fontSize: '0.7rem', color: '#991b1b' }}>
-                      ⚠ Keep this secret. Anyone with this key can sign attestations as you.
-                    </p>
-                  </details>
+                <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'var(--color-border-light)', borderRadius: 'var(--radius-sm)', fontSize: '0.75rem' }}>
+                  <strong>Signing:</strong> Active — attestations will be signed with your private key
                 </div>
               )}
               {!stored.secretKey && (
@@ -294,6 +283,17 @@ export function SupplierRegistration() {
             <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
               <div><strong>Supplier ID:</strong> <code>{result.id}</code></div>
               <div><strong>Public Key:</strong> <code style={{ wordBreak: 'break-all' }}>{result.publicKey}</code></div>
+            </div>
+            <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#fffbeb', borderRadius: 'var(--radius-sm)', border: '1px solid #fde68a' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#92400e', marginBottom: '0.4rem' }}>
+                ⚠ Save your Secret Key now — it will not be shown again
+              </div>
+              <code style={{ display: 'block', wordBreak: 'break-all', fontSize: '0.7rem', padding: '0.5rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
+                {(() => { try { const s = JSON.parse(localStorage.getItem('supplier') || '{}'); return s.secretKey || ''; } catch { return ''; } })()}
+              </code>
+              <p style={{ margin: '0.4rem 0 0', fontSize: '0.7rem', color: '#92400e' }}>
+                You need this key to sign in on another device. Store it securely.
+              </p>
             </div>
           </div>
         </div>
