@@ -425,8 +425,26 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
         boxShadow: 'var(--shadow-sm)',
         overflowX: 'auto',
       }}>
-        {layers.map((layer, layerIdx) => (
+        {layers.map((layer, layerIdx) => {
+          const layerCost = layer.reduce((sum, a) => sum + a.materialCost + a.labourCost, 0);
+          const layerCACost = layer.filter((a) => a.location === 'CA').reduce((sum, a) => sum + a.materialCost + a.labourCost, 0);
+          return (
           <div key={layerIdx}>
+            {/* Layer header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.4rem',
+              padding: '0.3rem 0.5rem',
+              background: 'var(--color-border-light)',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '0.7rem',
+              color: 'var(--color-text-muted)',
+            }}>
+              <span style={{ fontWeight: 600 }}>Tier {layerIdx} — {layer.length} supplier{layer.length > 1 ? 's' : ''}</span>
+              <span>${layerCost.toLocaleString()} CAD ({layerCACost > 0 ? `${((layerCACost / layerCost) * 100).toFixed(0)}% CA` : '0% CA'})</span>
+            </div>
             {/* Layer of nodes */}
             <div style={{
               display: 'flex',
@@ -500,7 +518,8 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
