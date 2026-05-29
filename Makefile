@@ -1,4 +1,4 @@
-.PHONY: install build start dev test clean backend supplier purchaser docker docker-down help
+.PHONY: install build start dev test clean backend supplier purchaser docker docker-down help seed
 
 # Default target
 help:
@@ -75,3 +75,7 @@ clean:
 	rm -rf backend/dist
 	rm -rf supplier-ui/dist
 	rm -rf purchaser-ui/dist
+
+# Seed the database with sample supply chain data
+seed:
+	npx tsx scripts/seed.ts

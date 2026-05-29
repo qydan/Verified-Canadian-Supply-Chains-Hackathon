@@ -1,6 +1,18 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 
 // ============================================================================
+// Helpers
+// ============================================================================
+
+function countryFlag(code: string): string {
+  const codePoints = code
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
+
+// ============================================================================
 // Types (mirroring backend ProvenanceReport shape)
 // ============================================================================
 
@@ -210,6 +222,43 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
         </p>
       </div>
 
+      {/* Cost Breakdown */}
+      <div style={{
+        margin: '1.5rem 0',
+        padding: '1rem',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '8px',
+      }}>
+        <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Cost Breakdown</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
+          <span>Total Direct Costs:</span>
+          <strong>${report.totalDirectCosts.toFixed(2)}</strong>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
+          <span>Canadian Direct Costs:</span>
+          <strong>${report.canadianDirectCosts.toFixed(2)}</strong>
+        </div>
+        <div style={{
+          height: '1.25rem',
+          borderRadius: '4px',
+          backgroundColor: '#dee2e6',
+          overflow: 'hidden',
+          position: 'relative',
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${report.totalDirectCosts > 0 ? (report.canadianDirectCosts / report.totalDirectCosts) * 100 : 0}%`,
+            backgroundColor: '#28a745',
+            borderRadius: '4px 0 0 4px',
+            transition: 'width 0.3s ease',
+          }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem', fontSize: '0.75rem', color: '#666' }}>
+          <span>🇨🇦 Canadian</span>
+          <span>Non-Canadian</span>
+        </div>
+      </div>
+
       {/* Product Info */}
       <div style={{ marginBottom: '1.5rem', fontSize: '0.85rem', color: '#666' }}>
         <p><strong>Product:</strong> {report.productName}</p>
@@ -409,7 +458,7 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                     padding: '0.1rem 0.4rem',
                     borderRadius: '3px',
                   }}>
-                    {attestation.location}
+                    {countryFlag(attestation.location)} {attestation.location}
                   </span>
                   {attestation.isTransformation && (
                     <span style={{
