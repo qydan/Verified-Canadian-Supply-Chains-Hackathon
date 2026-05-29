@@ -81,14 +81,19 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const fetchIdRef = useRef(0);
 
   const fetchProvenance = useCallback(() => {
+    // Abort any previous request
     if (abortRef.current) {
       abortRef.current.abort();
     }
 
     const controller = new AbortController();
     abortRef.current = controller;
+
+    // Track which fetch this is so stale responses are ignored
+    const currentFetchId = ++fetchIdRef.current;
 
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -104,10 +109,14 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
         return res.json();
       })
       .then((data: ProvenanceReport) => {
+        // Ignore if a newer fetch has been started
+        if (currentFetchId !== fetchIdRef.current) return;
         setReport(data);
         setLoading(false);
       })
       .catch((err: unknown) => {
+        // Ignore if a newer fetch has been started (abort was from cleanup)
+        if (currentFetchId !== fetchIdRef.current) return;
         if (err instanceof Error && err.name === 'AbortError') {
           setError('Request timed out. The product information could not be retrieved.');
         } else if (err instanceof Error) {

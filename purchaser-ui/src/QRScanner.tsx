@@ -141,7 +141,7 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
       <div
         id={containerRef.current}
         className="qr-scanner-container"
-        style={{ width: '100%', minHeight: '300px' }}
+        style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
       />
       <p className="qr-scanner-hint">
         Point your camera at a product QR code to scan

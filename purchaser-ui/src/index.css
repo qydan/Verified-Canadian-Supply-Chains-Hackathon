@@ -625,6 +625,16 @@ code {
   box-shadow: var(--shadow-md);
 }
 
+.qr-scanner-container video {
+  max-height: 300px;
+  object-fit: cover;
+}
+
+.qr-scanner-container img {
+  max-height: 300px;
+  object-fit: contain;
+}
+
 .qr-scanner-hint {
   text-align: center;
   font-size: 0.85rem;
