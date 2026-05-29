@@ -92,6 +92,7 @@ interface AttestationPayload {
   location: string;
   materialCost: number;
   labourCost: number;
+  currency: string;
   outputQuantity: number;
   outputUnit: string;
   timestamp: string;
@@ -166,6 +167,7 @@ async function main() {
     location: 'CA',
     materialCost: 200,
     labourCost: 100,
+    currency: 'CAD',
     outputQuantity: 50,
     outputUnit: 'kg',
     timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
@@ -180,6 +182,7 @@ async function main() {
     location: 'CA',
     materialCost: 80,
     labourCost: 40,
+    currency: 'CAD',
     outputQuantity: 10,
     outputUnit: 'L',
     timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -194,6 +197,7 @@ async function main() {
     location: 'CA',
     materialCost: 50,
     labourCost: 300,
+    currency: 'CAD',
     outputQuantity: 1,
     outputUnit: 'units',
     timestamp: new Date(Date.now() - 86400000).toISOString(),
@@ -219,6 +223,7 @@ async function main() {
     location: 'CA',
     materialCost: 150,
     labourCost: 60,
+    currency: 'CAD',
     outputQuantity: 40,
     outputUnit: 'kg',
     timestamp: new Date(Date.now() - 86400000 * 4).toISOString(),
@@ -233,6 +238,7 @@ async function main() {
     location: 'US',
     materialCost: 120,
     labourCost: 30,
+    currency: 'CAD',
     outputQuantity: 20,
     outputUnit: 'units',
     timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
@@ -247,6 +253,7 @@ async function main() {
     location: 'CA',
     materialCost: 30,
     labourCost: 200,
+    currency: 'CAD',
     outputQuantity: 1,
     outputUnit: 'units',
     timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
@@ -272,6 +279,7 @@ async function main() {
     location: 'CN',
     materialCost: 300,
     labourCost: 100,
+    currency: 'CAD',
     outputQuantity: 100,
     outputUnit: 'units',
     timestamp: new Date(Date.now() - 86400000 * 5).toISOString(),
@@ -286,6 +294,7 @@ async function main() {
     location: 'CN',
     materialCost: 80,
     labourCost: 20,
+    currency: 'CAD',
     outputQuantity: 100,
     outputUnit: 'units',
     timestamp: new Date(Date.now() - 86400000 * 4).toISOString(),
@@ -300,6 +309,7 @@ async function main() {
     location: 'CN',
     materialCost: 50,
     labourCost: 30,
+    currency: 'CAD',
     outputQuantity: 50,
     outputUnit: 'units',
     timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),

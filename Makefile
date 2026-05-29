@@ -1,4 +1,4 @@
-.PHONY: install build start dev test clean backend supplier purchaser docker docker-down help seed
+.PHONY: install build start dev test clean backend supplier purchaser docker docker-down help seed stop
 
 # Default target
 help:
@@ -13,6 +13,7 @@ help:
 	@echo "  make backend      Start only the backend (port 8080)"
 	@echo "  make supplier     Start only the supplier UI (port 3001)"
 	@echo "  make purchaser    Start only the purchaser UI (port 3002)"
+	@echo "  make stop         Kill dev servers running on ports 8080, 3001, 3002"
 	@echo "  make docker       Build and start with Docker Compose"
 	@echo "  make docker-down  Stop Docker Compose services"
 	@echo "  make clean        Remove build artifacts"
@@ -75,6 +76,12 @@ clean:
 	rm -rf backend/dist
 	rm -rf supplier-ui/dist
 	rm -rf purchaser-ui/dist
+
+# Stop dev servers running on known ports
+stop:
+	@echo "Stopping processes on ports 8080, 3001, 3002..."
+	@kill $$(lsof -t -i:8080 -i:3001 -i:3002) 2>/dev/null || true
+	@echo "Done."
 
 # Seed the database with sample supply chain data
 seed:

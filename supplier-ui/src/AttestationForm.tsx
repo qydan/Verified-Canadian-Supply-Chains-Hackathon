@@ -48,9 +48,10 @@ const COUNTRY_CODES = [
 interface AttestationFormProps {
   onSubmit: (data: AttestationFormData) => void;
   disabled?: boolean;
+  resetKey?: number;
 }
 
-export function AttestationForm({ onSubmit, disabled = false }: AttestationFormProps) {
+export function AttestationForm({ onSubmit, disabled = false, resetKey = 0 }: AttestationFormProps) {
   const [productName, setProductName] = useState('');
   const [productId, setProductId] = useState('');
   const [location, setLocation] = useState('');
@@ -61,6 +62,22 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
   const [isTransformation, setIsTransformation] = useState(false);
   const [inputReferences, setInputReferences] = useState<{ attestationId: string; quantityUsed: string; unit: string }[]>([]);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [lastResetKey, setLastResetKey] = useState(resetKey);
+
+  // Reset all fields when resetKey changes (after successful submission)
+  if (resetKey !== lastResetKey) {
+    setLastResetKey(resetKey);
+    setProductName('');
+    setProductId('');
+    setLocation('');
+    setMaterialCost('');
+    setLabourCost('');
+    setOutputQuantity('');
+    setOutputUnit('');
+    setIsTransformation(false);
+    setInputReferences([]);
+    setErrors({});
+  }
 
   function validate(): FieldErrors {
     const newErrors: FieldErrors = {};

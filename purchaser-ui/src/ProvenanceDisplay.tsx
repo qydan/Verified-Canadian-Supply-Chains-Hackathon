@@ -204,6 +204,10 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
           <span style={{ color: 'var(--color-text-secondary)' }}>Canadian Direct Costs:</span>
           <strong>${report.canadianDirectCosts.toFixed(2)}</strong>
         </div>
+        <div className="progress-labels" style={{ marginBottom: '0.35rem' }}>
+          <span>🇨🇦 Canadian ({report.canadianContentPercent.toFixed(2)}%)</span>
+          <span>Non-Canadian ({(100 - report.canadianContentPercent).toFixed(2)}%)</span>
+        </div>
         <div className="progress-bar-track">
           <div
             className="progress-bar-fill"
@@ -211,10 +215,6 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
               width: `${report.totalDirectCosts > 0 ? (report.canadianDirectCosts / report.totalDirectCosts) * 100 : 0}%`,
             }}
           />
-        </div>
-        <div className="progress-labels">
-          <span>🇨🇦 Canadian</span>
-          <span>Non-Canadian</span>
         </div>
       </div>
 

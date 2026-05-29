@@ -51,6 +51,14 @@ function saveHistoryEntry(entry: HistoryEntry) {
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('submit');
+  const [historyVersion, setHistoryVersion] = useState(0);
+
+  function handlePageChange(page: Page) {
+    setCurrentPage(page);
+    if (page === 'history') {
+      setHistoryVersion((v) => v + 1);
+    }
+  }
 
   return (
     <div className="app-layout">
@@ -63,19 +71,19 @@ function App() {
 
       <nav className="app-nav">
         <button
-          onClick={() => setCurrentPage('submit')}
+          onClick={() => handlePageChange('submit')}
           className={`nav-btn ${currentPage === 'submit' ? 'active' : ''}`}
         >
           Submit Attestation
         </button>
         <button
-          onClick={() => setCurrentPage('history')}
+          onClick={() => handlePageChange('history')}
           className={`nav-btn ${currentPage === 'history' ? 'active' : ''}`}
         >
           Submission History
         </button>
         <button
-          onClick={() => setCurrentPage('register')}
+          onClick={() => handlePageChange('register')}
           className={`nav-btn ${currentPage === 'register' ? 'active' : ''}`}
         >
           Register Supplier
@@ -83,10 +91,14 @@ function App() {
       </nav>
 
       <main className="app-main">
-        <div className="fade-in">
-          {currentPage === 'submit' && <SubmitAttestationPage />}
-          {currentPage === 'history' && <HistoryPage />}
-          {currentPage === 'register' && <SupplierRegistration />}
+        <div className="fade-in" style={{ display: currentPage === 'submit' ? 'block' : 'none' }}>
+          <SubmitAttestationPage />
+        </div>
+        <div className="fade-in" style={{ display: currentPage === 'history' ? 'block' : 'none' }}>
+          <HistoryPage refreshKey={historyVersion} />
+        </div>
+        <div className="fade-in" style={{ display: currentPage === 'register' ? 'block' : 'none' }}>
+          <SupplierRegistration />
         </div>
       </main>
 
@@ -101,6 +113,7 @@ function SubmitAttestationPage() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; contentHash: string; productId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [formResetKey, setFormResetKey] = useState(0);
 
   async function handleSubmit(data: AttestationFormData) {
     setSubmitting(true);
@@ -136,6 +149,7 @@ function SubmitAttestationPage() {
         location: data.location,
         materialCost: data.materialCost,
         labourCost: data.labourCost,
+        currency: 'CAD',
         outputQuantity: data.outputQuantity,
         outputUnit: data.outputUnit,
         timestamp: new Date().toISOString(),
@@ -166,6 +180,7 @@ function SubmitAttestationPage() {
       if (response.ok) {
         const body = await response.json();
         setResult({ id: body.id, contentHash: body.contentHash, productId: data.productId });
+        setFormResetKey((k) => k + 1);
 
         saveHistoryEntry({
           productName: data.productName,
@@ -228,19 +243,19 @@ function SubmitAttestationPage() {
       )}
 
       <div className="card">
-        <AttestationForm onSubmit={handleSubmit} disabled={submitting} />
+        <AttestationForm onSubmit={handleSubmit} disabled={submitting} resetKey={formResetKey} />
       </div>
     </div>
   );
 }
 
-function HistoryPage() {
+function HistoryPage({ refreshKey }: { refreshKey: number }) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     setHistory(getHistory());
-  }, []);
+  }, [refreshKey]);
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text).then(() => {
