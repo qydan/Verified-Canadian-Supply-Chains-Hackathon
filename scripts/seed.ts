@@ -1,5 +1,5 @@
 /**
- * Seed script: populates a realistic multi-tier Canadian supply chain.
+ * Seed script: populates realistic multi-tier Canadian supply chains.
  *
  * Run with: npx tsx scripts/seed.ts
  *
@@ -40,6 +40,10 @@ function canonicalize(obj: unknown): Uint8Array {
   return new TextEncoder().encode(json);
 }
 
+function daysAgo(days: number): string {
+  return new Date(Date.now() - 86400000 * days).toISOString();
+}
+
 // ============================================================================
 // Supplier definitions
 // ============================================================================
@@ -54,8 +58,15 @@ const suppliers: SupplierDef[] = [
   { name: 'Northern Timber Co.', location: 'CA', keyPair: nacl.sign.keyPair() },
   { name: 'Maple Resin Ltd.', location: 'CA', keyPair: nacl.sign.keyPair() },
   { name: 'Pacific Assembly Inc.', location: 'CA', keyPair: nacl.sign.keyPair() },
+  { name: 'Québec Textiles', location: 'CA', keyPair: nacl.sign.keyPair() },
+  { name: 'Alberta Metals', location: 'CA', keyPair: nacl.sign.keyPair() },
+  { name: 'Ontario Glass Works', location: 'CA', keyPair: nacl.sign.keyPair() },
   { name: 'US Steel Supply', location: 'US', keyPair: nacl.sign.keyPair() },
+  { name: 'Texas Plastics Corp', location: 'US', keyPair: nacl.sign.keyPair() },
   { name: 'Shenzhen Electronics', location: 'CN', keyPair: nacl.sign.keyPair() },
+  { name: 'Guangzhou Battery Co.', location: 'CN', keyPair: nacl.sign.keyPair() },
+  { name: 'Bavaria Motors GmbH', location: 'DE', keyPair: nacl.sign.keyPair() },
+  { name: 'Tokyo Precision Ltd.', location: 'JP', keyPair: nacl.sign.keyPair() },
 ];
 
 // ============================================================================
@@ -77,11 +88,11 @@ async function registerSupplier(supplier: SupplierDef): Promise<string> {
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Failed to register supplier "${supplier.name}": ${res.status} ${body}`);
+    throw new Error(`Failed to register "${supplier.name}": ${res.status} ${body}`);
   }
 
   const data = await res.json();
-  console.log(`  ✓ Registered supplier: ${supplier.name} (${supplier.location}) → ${data.id}`);
+  console.log(`  ✓ ${supplier.name} (${supplier.location}) → ${data.id}`);
   return data.id;
 }
 
@@ -100,7 +111,7 @@ interface AttestationPayload {
   inputs: Array<{ attestationId: string; quantityUsed: number; unit: string }>;
 }
 
-async function submitAttestation(
+async function submit(
   supplier: SupplierDef,
   supplierId: string,
   payload: AttestationPayload,
@@ -113,20 +124,16 @@ async function submitAttestation(
   const res = await fetch(`${API_BASE}/attestations`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      payload,
-      signature: sigHex,
-      publicKey: pubKeyHex,
-    }),
+    body: JSON.stringify({ payload, signature: sigHex, publicKey: pubKeyHex }),
   });
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`Failed to submit attestation for "${payload.productName}": ${res.status} ${body}`);
+    throw new Error(`Failed: "${payload.productName}": ${res.status} ${body}`);
   }
 
   const data = await res.json();
-  console.log(`  ✓ Attestation: ${payload.productName} (${payload.location}) → ${data.id}`);
+  console.log(`  ✓ ${payload.productName} (${payload.location}) → ${data.id}`);
   return { id: data.id, contentHash: data.contentHash };
 }
 
@@ -139,194 +146,456 @@ async function main() {
 
   // --- Register all suppliers ---
   console.log('📋 Registering suppliers...');
-  const supplierIds: string[] = [];
+  const ids: string[] = [];
   for (const s of suppliers) {
-    const id = await registerSupplier(s);
-    supplierIds.push(id);
+    ids.push(await registerSupplier(s));
   }
   console.log('');
 
-  const [northernTimber, mapleResin, pacificAssembly, usSteel, shenzhenElectronics] = suppliers;
-  const [northernTimberId, mapleResinId, pacificAssemblyId, usSteelId, shenzhenElectronicsId] = supplierIds;
+  const [
+    northernTimber, mapleResin, pacificAssembly, quebecTextiles,
+    albertaMetals, ontarioGlass, usSteel, texasPlastics,
+    shenzhenElec, guangzhouBattery, bavariaMotors, tokyoPrecision,
+  ] = suppliers;
+  const [
+    northernTimberId, mapleResinId, pacificAssemblyId, quebecTextilesId,
+    albertaMetalsId, ontarioGlassId, usSteelId, texasPlasticsId,
+    shenzhenElecId, guangzhouBatteryId, bavariaMotorsId, tokyoPrecisionId,
+  ] = ids;
 
-  // Use proper UUIDs for product IDs (purchaser UI validates UUID format)
+  // Product IDs
   const productOfCanadaId = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
-  const madeInCanadaId = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e';
+  const madeInCanadaId    = 'b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e';
   const noneDesignationId = 'c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f';
+  const evBikeId          = 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80';
 
   // =========================================================================
-  // Chain 1: "Product of Canada" (≥98% CA costs, last transform in CA)
-  // All steps are Canadian
+  // Chain 1: "Product of Canada" — Handcrafted Maple Furniture
+  // 5 steps, all Canadian, 100% CA content
   // =========================================================================
-  console.log('🍁 Chain 1: Product of Canada (≥98% CA costs)');
+  console.log('🍁 Chain 1: Product of Canada — Handcrafted Maple Furniture (5 steps)');
 
-  const timber = await submitAttestation(northernTimber, northernTimberId, {
-    productName: 'Canadian Hardwood Lumber',
+  const rawLogs = await submit(northernTimber, northernTimberId, {
+    productName: 'Raw Maple Logs',
     productId: productOfCanadaId,
     supplierId: northernTimberId,
     location: 'CA',
-    materialCost: 200,
-    labourCost: 100,
+    materialCost: 120,
+    labourCost: 80,
     currency: 'CAD',
-    outputQuantity: 50,
+    outputQuantity: 200,
     outputUnit: 'kg',
-    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
+    timestamp: daysAgo(10),
     isTransformation: false,
     inputs: [],
   });
 
-  const resin = await submitAttestation(mapleResin, mapleResinId, {
-    productName: 'Canadian Wood Finish',
+  const kilnDried = await submit(northernTimber, northernTimberId, {
+    productName: 'Kiln-Dried Maple Planks',
+    productId: productOfCanadaId,
+    supplierId: northernTimberId,
+    location: 'CA',
+    materialCost: 50,
+    labourCost: 90,
+    currency: 'CAD',
+    outputQuantity: 150,
+    outputUnit: 'kg',
+    timestamp: daysAgo(8),
+    isTransformation: true,
+    inputs: [{ attestationId: rawLogs.id, quantityUsed: 180, unit: 'kg' }],
+  });
+
+  const woodFinish = await submit(mapleResin, mapleResinId, {
+    productName: 'Natural Maple Varnish',
     productId: productOfCanadaId,
     supplierId: mapleResinId,
     location: 'CA',
-    materialCost: 80,
-    labourCost: 40,
-    currency: 'CAD',
-    outputQuantity: 10,
-    outputUnit: 'L',
-    timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-    isTransformation: false,
-    inputs: [],
-  });
-
-  await submitAttestation(pacificAssembly, pacificAssemblyId, {
-    productName: 'Handcrafted Maple Furniture',
-    productId: productOfCanadaId,
-    supplierId: pacificAssemblyId,
-    location: 'CA',
-    materialCost: 50,
-    labourCost: 300,
-    currency: 'CAD',
-    outputQuantity: 1,
-    outputUnit: 'units',
-    timestamp: new Date(Date.now() - 86400000).toISOString(),
-    isTransformation: true,
-    inputs: [
-      { attestationId: timber.id, quantityUsed: 30, unit: 'kg' },
-      { attestationId: resin.id, quantityUsed: 2, unit: 'L' },
-    ],
-  });
-
-  console.log('');
-
-  // =========================================================================
-  // Chain 2: "Made in Canada" (51-97% CA costs, last transform in CA)
-  // Mix of CA and US inputs, assembled in CA
-  // =========================================================================
-  console.log('🏭 Chain 2: Made in Canada (51-97% CA costs)');
-
-  const caWood = await submitAttestation(northernTimber, northernTimberId, {
-    productName: 'Canadian Pine Boards',
-    productId: madeInCanadaId,
-    supplierId: northernTimberId,
-    location: 'CA',
-    materialCost: 150,
-    labourCost: 60,
-    currency: 'CAD',
-    outputQuantity: 40,
-    outputUnit: 'kg',
-    timestamp: new Date(Date.now() - 86400000 * 4).toISOString(),
-    isTransformation: false,
-    inputs: [],
-  });
-
-  const usHardware = await submitAttestation(usSteel, usSteelId, {
-    productName: 'Steel Brackets & Hardware',
-    productId: madeInCanadaId,
-    supplierId: usSteelId,
-    location: 'US',
-    materialCost: 120,
+    materialCost: 60,
     labourCost: 30,
     currency: 'CAD',
     outputQuantity: 20,
-    outputUnit: 'units',
-    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
-    isTransformation: false,
+    outputUnit: 'L',
+    timestamp: daysAgo(7),
+    isTransformation: true,
     inputs: [],
   });
 
-  await submitAttestation(pacificAssembly, pacificAssemblyId, {
-    productName: 'Hybrid Dining Table',
-    productId: madeInCanadaId,
+  const caHardware = await submit(albertaMetals, albertaMetalsId, {
+    productName: 'Brass Drawer Pulls & Hinges',
+    productId: productOfCanadaId,
+    supplierId: albertaMetalsId,
+    location: 'CA',
+    materialCost: 40,
+    labourCost: 25,
+    currency: 'CAD',
+    outputQuantity: 30,
+    outputUnit: 'units',
+    timestamp: daysAgo(6),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  await submit(pacificAssembly, pacificAssemblyId, {
+    productName: 'Handcrafted Maple Dresser',
+    productId: productOfCanadaId,
     supplierId: pacificAssemblyId,
     location: 'CA',
     materialCost: 30,
-    labourCost: 200,
+    labourCost: 350,
     currency: 'CAD',
     outputQuantity: 1,
     outputUnit: 'units',
-    timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
+    timestamp: daysAgo(3),
     isTransformation: true,
     inputs: [
-      { attestationId: caWood.id, quantityUsed: 35, unit: 'kg' },
-      { attestationId: usHardware.id, quantityUsed: 10, unit: 'units' },
+      { attestationId: kilnDried.id, quantityUsed: 60, unit: 'kg' },
+      { attestationId: woodFinish.id, quantityUsed: 5, unit: 'L' },
+      { attestationId: caHardware.id, quantityUsed: 12, unit: 'units' },
     ],
   });
 
   console.log('');
 
   // =========================================================================
-  // Chain 3: "None" designation (mostly non-CA)
-  // Chinese electronics with minimal CA involvement
+  // Chain 2: "Made in Canada" — Premium Winter Jacket
+  // 6 steps across CA, CN, JP — assembled in Canada
   // =========================================================================
-  console.log('❌ Chain 3: No Canadian Designation (mostly non-CA)');
+  console.log('🏭 Chain 2: Made in Canada — Premium Winter Jacket (6 steps)');
 
-  const cnBoard = await submitAttestation(shenzhenElectronics, shenzhenElectronicsId, {
-    productName: 'Circuit Board Assembly',
-    productId: noneDesignationId,
-    supplierId: shenzhenElectronicsId,
+  const cnSilk = await submit(shenzhenElec, shenzhenElecId, {
+    productName: 'Silk Lining Fabric',
+    productId: madeInCanadaId,
+    supplierId: shenzhenElecId,
     location: 'CN',
-    materialCost: 300,
-    labourCost: 100,
+    materialCost: 45,
+    labourCost: 15,
     currency: 'CAD',
-    outputQuantity: 100,
-    outputUnit: 'units',
-    timestamp: new Date(Date.now() - 86400000 * 5).toISOString(),
-    isTransformation: true,
-    inputs: [],
-  });
-
-  const cnCasing = await submitAttestation(shenzhenElectronics, shenzhenElectronicsId, {
-    productName: 'Plastic Enclosure',
-    productId: noneDesignationId,
-    supplierId: shenzhenElectronicsId,
-    location: 'CN',
-    materialCost: 80,
-    labourCost: 20,
-    currency: 'CAD',
-    outputQuantity: 100,
-    outputUnit: 'units',
-    timestamp: new Date(Date.now() - 86400000 * 4).toISOString(),
+    outputQuantity: 50,
+    outputUnit: 'm',
+    timestamp: daysAgo(14),
     isTransformation: false,
     inputs: [],
   });
 
-  await submitAttestation(shenzhenElectronics, shenzhenElectronicsId, {
-    productName: 'Consumer Electronics Gadget',
-    productId: noneDesignationId,
-    supplierId: shenzhenElectronicsId,
-    location: 'CN',
-    materialCost: 50,
-    labourCost: 30,
+  const jpZippers = await submit(tokyoPrecision, tokyoPrecisionId, {
+    productName: 'YKK Premium Zippers',
+    productId: madeInCanadaId,
+    supplierId: tokyoPrecisionId,
+    location: 'JP',
+    materialCost: 20,
+    labourCost: 10,
     currency: 'CAD',
-    outputQuantity: 50,
+    outputQuantity: 100,
     outputUnit: 'units',
-    timestamp: new Date(Date.now() - 86400000 * 3).toISOString(),
+    timestamp: daysAgo(13),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const caDown = await submit(quebecTextiles, quebecTextilesId, {
+    productName: 'Canadian Goose Down Fill',
+    productId: madeInCanadaId,
+    supplierId: quebecTextilesId,
+    location: 'CA',
+    materialCost: 180,
+    labourCost: 60,
+    currency: 'CAD',
+    outputQuantity: 25,
+    outputUnit: 'kg',
+    timestamp: daysAgo(12),
+    isTransformation: false,
+    inputs: [],
+  });
+
+  const caShell = await submit(quebecTextiles, quebecTextilesId, {
+    productName: 'Waterproof Nylon Shell',
+    productId: madeInCanadaId,
+    supplierId: quebecTextilesId,
+    location: 'CA',
+    materialCost: 70,
+    labourCost: 40,
+    currency: 'CAD',
+    outputQuantity: 30,
+    outputUnit: 'm',
+    timestamp: daysAgo(10),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const caInsulated = await submit(quebecTextiles, quebecTextilesId, {
+    productName: 'Insulated Panel Assembly',
+    productId: madeInCanadaId,
+    supplierId: quebecTextilesId,
+    location: 'CA',
+    materialCost: 20,
+    labourCost: 80,
+    currency: 'CAD',
+    outputQuantity: 15,
+    outputUnit: 'units',
+    timestamp: daysAgo(8),
     isTransformation: true,
     inputs: [
-      { attestationId: cnBoard.id, quantityUsed: 50, unit: 'units' },
-      { attestationId: cnCasing.id, quantityUsed: 50, unit: 'units' },
+      { attestationId: caDown.id, quantityUsed: 10, unit: 'kg' },
+      { attestationId: caShell.id, quantityUsed: 15, unit: 'm' },
+    ],
+  });
+
+  await submit(quebecTextiles, quebecTextilesId, {
+    productName: 'Premium Winter Parka',
+    productId: madeInCanadaId,
+    supplierId: quebecTextilesId,
+    location: 'CA',
+    materialCost: 15,
+    labourCost: 120,
+    currency: 'CAD',
+    outputQuantity: 1,
+    outputUnit: 'units',
+    timestamp: daysAgo(5),
+    isTransformation: true,
+    inputs: [
+      { attestationId: caInsulated.id, quantityUsed: 1, unit: 'units' },
+      { attestationId: cnSilk.id, quantityUsed: 3, unit: 'm' },
+      { attestationId: jpZippers.id, quantityUsed: 3, unit: 'units' },
     ],
   });
 
   console.log('');
-  console.log('✅ Seed complete!');
+
+  // =========================================================================
+  // Chain 3: "None" — Smart Home Hub (mostly CN/US, packaged in CN)
+  // 5 steps, global supply chain, no Canadian content
+  // =========================================================================
+  console.log('❌ Chain 3: No Designation — Smart Home Hub (5 steps)');
+
+  const cnChip = await submit(shenzhenElec, shenzhenElecId, {
+    productName: 'ARM Cortex-A53 SoC',
+    productId: noneDesignationId,
+    supplierId: shenzhenElecId,
+    location: 'CN',
+    materialCost: 85,
+    labourCost: 35,
+    currency: 'CAD',
+    outputQuantity: 500,
+    outputUnit: 'units',
+    timestamp: daysAgo(20),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const cnWifi = await submit(shenzhenElec, shenzhenElecId, {
+    productName: 'WiFi 6 Radio Module',
+    productId: noneDesignationId,
+    supplierId: shenzhenElecId,
+    location: 'CN',
+    materialCost: 40,
+    labourCost: 20,
+    currency: 'CAD',
+    outputQuantity: 500,
+    outputUnit: 'units',
+    timestamp: daysAgo(19),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const usPlastic = await submit(texasPlastics, texasPlasticsId, {
+    productName: 'Injection Molded Enclosure',
+    productId: noneDesignationId,
+    supplierId: texasPlasticsId,
+    location: 'US',
+    materialCost: 30,
+    labourCost: 15,
+    currency: 'CAD',
+    outputQuantity: 200,
+    outputUnit: 'units',
+    timestamp: daysAgo(18),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const cnPCB = await submit(shenzhenElec, shenzhenElecId, {
+    productName: 'Main PCB Assembly',
+    productId: noneDesignationId,
+    supplierId: shenzhenElecId,
+    location: 'CN',
+    materialCost: 25,
+    labourCost: 45,
+    currency: 'CAD',
+    outputQuantity: 300,
+    outputUnit: 'units',
+    timestamp: daysAgo(15),
+    isTransformation: true,
+    inputs: [
+      { attestationId: cnChip.id, quantityUsed: 300, unit: 'units' },
+      { attestationId: cnWifi.id, quantityUsed: 300, unit: 'units' },
+    ],
+  });
+
+  await submit(shenzhenElec, shenzhenElecId, {
+    productName: 'Smart Home Hub v3',
+    productId: noneDesignationId,
+    supplierId: shenzhenElecId,
+    location: 'CN',
+    materialCost: 10,
+    labourCost: 30,
+    currency: 'CAD',
+    outputQuantity: 100,
+    outputUnit: 'units',
+    timestamp: daysAgo(12),
+    isTransformation: true,
+    inputs: [
+      { attestationId: cnPCB.id, quantityUsed: 100, unit: 'units' },
+      { attestationId: usPlastic.id, quantityUsed: 100, unit: 'units' },
+    ],
+  });
+
   console.log('');
+
+  // =========================================================================
+  // Chain 4: "Made in Canada" — Electric Cargo Bike
+  // 8 steps across CA, US, CN, DE, JP — complex multi-country chain
+  // =========================================================================
+  console.log('🚲 Chain 4: Made in Canada — Electric Cargo Bike (8 steps)');
+
+  const jpGears = await submit(tokyoPrecision, tokyoPrecisionId, {
+    productName: 'Shimano Internal Gear Hub',
+    productId: evBikeId,
+    supplierId: tokyoPrecisionId,
+    location: 'JP',
+    materialCost: 95,
+    labourCost: 55,
+    currency: 'CAD',
+    outputQuantity: 50,
+    outputUnit: 'units',
+    timestamp: daysAgo(30),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const deMotor = await submit(bavariaMotors, bavariaMotorsId, {
+    productName: 'Bosch Mid-Drive Motor',
+    productId: evBikeId,
+    supplierId: bavariaMotorsId,
+    location: 'DE',
+    materialCost: 220,
+    labourCost: 130,
+    currency: 'CAD',
+    outputQuantity: 40,
+    outputUnit: 'units',
+    timestamp: daysAgo(28),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const cnBattery = await submit(guangzhouBattery, guangzhouBatteryId, {
+    productName: 'Li-Ion 48V 20Ah Battery Pack',
+    productId: evBikeId,
+    supplierId: guangzhouBatteryId,
+    location: 'CN',
+    materialCost: 180,
+    labourCost: 60,
+    currency: 'CAD',
+    outputQuantity: 60,
+    outputUnit: 'units',
+    timestamp: daysAgo(26),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const caFrame = await submit(albertaMetals, albertaMetalsId, {
+    productName: 'Aluminum Cargo Frame',
+    productId: evBikeId,
+    supplierId: albertaMetalsId,
+    location: 'CA',
+    materialCost: 160,
+    labourCost: 120,
+    currency: 'CAD',
+    outputQuantity: 30,
+    outputUnit: 'units',
+    timestamp: daysAgo(24),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const caWheels = await submit(albertaMetals, albertaMetalsId, {
+    productName: 'Heavy-Duty Wheel Set',
+    productId: evBikeId,
+    supplierId: albertaMetalsId,
+    location: 'CA',
+    materialCost: 80,
+    labourCost: 50,
+    currency: 'CAD',
+    outputQuantity: 30,
+    outputUnit: 'pairs',
+    timestamp: daysAgo(22),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const caCargoBox = await submit(ontarioGlass, ontarioGlassId, {
+    productName: 'Insulated Cargo Box',
+    productId: evBikeId,
+    supplierId: ontarioGlassId,
+    location: 'CA',
+    materialCost: 90,
+    labourCost: 70,
+    currency: 'CAD',
+    outputQuantity: 25,
+    outputUnit: 'units',
+    timestamp: daysAgo(20),
+    isTransformation: true,
+    inputs: [],
+  });
+
+  const caDrivetrain = await submit(pacificAssembly, pacificAssemblyId, {
+    productName: 'E-Drive Assembly',
+    productId: evBikeId,
+    supplierId: pacificAssemblyId,
+    location: 'CA',
+    materialCost: 30,
+    labourCost: 150,
+    currency: 'CAD',
+    outputQuantity: 20,
+    outputUnit: 'units',
+    timestamp: daysAgo(16),
+    isTransformation: true,
+    inputs: [
+      { attestationId: deMotor.id, quantityUsed: 20, unit: 'units' },
+      { attestationId: cnBattery.id, quantityUsed: 20, unit: 'units' },
+      { attestationId: jpGears.id, quantityUsed: 20, unit: 'units' },
+    ],
+  });
+
+  await submit(pacificAssembly, pacificAssemblyId, {
+    productName: 'Electric Cargo Bike — Maple Edition',
+    productId: evBikeId,
+    supplierId: pacificAssemblyId,
+    location: 'CA',
+    materialCost: 40,
+    labourCost: 280,
+    currency: 'CAD',
+    outputQuantity: 1,
+    outputUnit: 'units',
+    timestamp: daysAgo(10),
+    isTransformation: true,
+    inputs: [
+      { attestationId: caDrivetrain.id, quantityUsed: 1, unit: 'units' },
+      { attestationId: caFrame.id, quantityUsed: 1, unit: 'units' },
+      { attestationId: caWheels.id, quantityUsed: 1, unit: 'pairs' },
+      { attestationId: caCargoBox.id, quantityUsed: 1, unit: 'units' },
+    ],
+  });
+
+  console.log('');
+
+  // =========================================================================
+  // Done
+  // =========================================================================
+  console.log('✅ Seed complete!\n');
   console.log('Product IDs for provenance lookup:');
-  console.log(`  Product of Canada: ${productOfCanadaId}`);
-  console.log(`  Made in Canada:    ${madeInCanadaId}`);
-  console.log(`  None:              ${noneDesignationId}`);
+  console.log(`  🍁 Product of Canada (5 steps):  ${productOfCanadaId}`);
+  console.log(`  🏭 Made in Canada — Jacket (6):  ${madeInCanadaId}`);
+  console.log(`  ❌ No Designation — Hub (5):      ${noneDesignationId}`);
+  console.log(`  🚲 Made in Canada — E-Bike (8):  ${evBikeId}`);
   console.log('');
   console.log('Paste any of these into the Purchaser UI to see the provenance report.');
 }
