@@ -1,7 +1,11 @@
 node_modules/
 dist/
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 .vscode/
 .kiro/
 .env
+backend/data/
+*.tsbuildinfo
