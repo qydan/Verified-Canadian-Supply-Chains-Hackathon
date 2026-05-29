@@ -691,6 +691,10 @@ code {
 
 
 /* --- Print Styles for Report Export --- */
+@page {
+  margin: 0;
+}
+
 @media print {
   .app-header, .app-nav, .app-footer {
     display: none !important;
@@ -709,6 +713,7 @@ code {
   body {
     background: #fff;
     font-size: 11pt;
+    padding: 1.5cm;
   }
 
   .app-layout {
