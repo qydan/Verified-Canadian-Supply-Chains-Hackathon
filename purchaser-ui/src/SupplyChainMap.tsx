@@ -25,6 +25,8 @@ const COUNTRY_COORDS: Record<string, [number, number]> = {
   JP: [138.3, 36.2],
   KR: [127.8, 35.9],
   AU: [133.8, -25.3],
+  IL: [34.8, 31.0],
+  TW: [121.0, 23.7],
 };
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
