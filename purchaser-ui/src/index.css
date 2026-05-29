@@ -692,7 +692,11 @@ code {
 
 /* --- Print Styles for Report Export --- */
 @media print {
-  .app-header, .app-nav, .app-footer, .btn {
+  .app-header, .app-nav, .app-footer {
+    display: none !important;
+  }
+
+  .btn {
     display: none !important;
   }
 
@@ -710,8 +714,9 @@ code {
     break-inside: avoid;
   }
 
-  .designation-banner {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 }
