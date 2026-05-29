@@ -11,25 +11,37 @@ interface CostPieChartProps {
   chain: Attestation[];
 }
 
-const COLORS = [
-  '#10b981', // CA - green
-  '#6366f1', // US - indigo
-  '#f59e0b', // CN - amber
-  '#ec4899', // DE - pink
-  '#8b5cf6', // JP - purple
-  '#14b8a6', // KR - teal
-  '#f97316', // GB - orange
-  '#06b6d4', // FR - cyan
-  '#ef4444', // IL - red
-  '#84cc16', // IN - lime
-  '#a855f7', // TW - violet
-  '#64748b', // other - slate
-];
+const COLORS: Record<string, string> = {
+  CA: '#10b981',
+  US: '#6366f1',
+  CN: '#f59e0b',
+  DE: '#ec4899',
+  JP: '#8b5cf6',
+  KR: '#14b8a6',
+  GB: '#f97316',
+  FR: '#06b6d4',
+  IL: '#ef4444',
+  IN: '#84cc16',
+  TW: '#a855f7',
+};
 
-function countryFlag(code: string): string {
-  const codePoints = code.toUpperCase().split('').map((c) => 127397 + c.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
+const COUNTRY_NAMES: Record<string, string> = {
+  CA: 'Canada',
+  US: 'United States',
+  CN: 'China',
+  DE: 'Germany',
+  JP: 'Japan',
+  KR: 'South Korea',
+  GB: 'United Kingdom',
+  FR: 'France',
+  IL: 'Israel',
+  IN: 'India',
+  TW: 'Taiwan',
+  MX: 'Mexico',
+  BR: 'Brazil',
+  AU: 'Australia',
+  IT: 'Italy',
+};
 
 export function CostPieChart({ chain }: CostPieChartProps) {
   const data = useMemo(() => {
@@ -39,15 +51,15 @@ export function CostPieChart({ chain }: CostPieChartProps) {
       costByCountry.set(att.location, (costByCountry.get(att.location) || 0) + cost);
     }
     return Array.from(costByCountry.entries())
-      .map(([country, value]) => ({ name: `${countryFlag(country)} ${country}`, value, country }))
+      .map(([country, value]) => ({
+        name: COUNTRY_NAMES[country] || country,
+        value,
+        country,
+      }))
       .sort((a, b) => b.value - a.value);
   }, [chain]);
 
   if (data.length === 0) return null;
-
-  const countryColorMap = new Map<string, string>();
-  const countries = [...new Set(chain.map((a) => a.location))].sort();
-  countries.forEach((c, i) => countryColorMap.set(c, COLORS[i % COLORS.length]));
 
   return (
     <div style={{ marginBottom: '1.5rem' }}>
@@ -59,22 +71,24 @@ export function CostPieChart({ chain }: CostPieChartProps) {
         padding: '1rem',
         boxShadow: 'var(--shadow-sm)',
       }}>
-        <ResponsiveContainer width="100%" height={250}>
+        <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
               data={data}
               cx="50%"
               cy="50%"
-              outerRadius={90}
+              outerRadius={95}
               dataKey="value"
               label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(1)}%`}
               labelLine={true}
             >
               {data.map((entry) => (
-                <Cell key={entry.country} fill={countryColorMap.get(entry.country) || '#64748b'} />
+                <Cell key={entry.country} fill={COLORS[entry.country] || '#64748b'} />
               ))}
             </Pie>
-            <Tooltip formatter={(value) => `$${Number(value).toFixed(2)}`} />
+            <Tooltip
+              formatter={(value) => `$${Number(value).toFixed(2)} CAD`}
+            />
             <Legend />
           </PieChart>
         </ResponsiveContainer>
