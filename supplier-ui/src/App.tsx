@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import nacl from 'tweetnacl';
 import { QRCodeSVG } from 'qrcode.react';
 import { AttestationForm, AttestationFormData } from './AttestationForm';
@@ -6,15 +6,7 @@ import { SupplierRegistration } from './SupplierRegistration';
 import { SupplierDashboard } from './SupplierDashboard';
 import { canonicalize } from './crypto';
 
-type Page = 'dashboard' | 'submit' | 'history' | 'register';
-
-interface HistoryEntry {
-  productName: string;
-  productId: string;
-  attestationId: string;
-  contentHash: string;
-  timestamp: string;
-}
+type Page = 'dashboard' | 'submit' | 'register';
 
 interface StoredSupplier {
   id: string;
@@ -34,30 +26,14 @@ function getStoredSupplier(): StoredSupplier | null {
   }
 }
 
-function getHistory(): HistoryEntry[] {
-  try {
-    const raw = localStorage.getItem('submissionHistory');
-    if (!raw) return [];
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
-}
-
-function saveHistoryEntry(entry: HistoryEntry) {
-  const history = getHistory();
-  history.unshift(entry);
-  localStorage.setItem('submissionHistory', JSON.stringify(history));
-}
-
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-  const [historyVersion, setHistoryVersion] = useState(0);
+  const [dashboardVersion, setDashboardVersion] = useState(0);
 
   function handlePageChange(page: Page) {
     setCurrentPage(page);
-    if (page === 'history') {
-      setHistoryVersion((v) => v + 1);
+    if (page === 'dashboard') {
+      setDashboardVersion((v) => v + 1);
     }
   }
 
@@ -84,28 +60,19 @@ function App() {
           Submit Attestation
         </button>
         <button
-          onClick={() => handlePageChange('history')}
-          className={`nav-btn ${currentPage === 'history' ? 'active' : ''}`}
-        >
-          History
-        </button>
-        <button
           onClick={() => handlePageChange('register')}
           className={`nav-btn ${currentPage === 'register' ? 'active' : ''}`}
         >
-          Register
+          Identity
         </button>
       </nav>
 
       <main className="app-main">
         <div className="fade-in" style={{ display: currentPage === 'dashboard' ? 'block' : 'none' }}>
-          <SupplierDashboard />
+          <SupplierDashboard key={dashboardVersion} />
         </div>
         <div className="fade-in" style={{ display: currentPage === 'submit' ? 'block' : 'none' }}>
-          <SubmitAttestationPage />
-        </div>
-        <div className="fade-in" style={{ display: currentPage === 'history' ? 'block' : 'none' }}>
-          <HistoryPage refreshKey={historyVersion} />
+          <SubmitAttestationPage onSubmitted={() => setDashboardVersion((v) => v + 1)} />
         </div>
         <div className="fade-in" style={{ display: currentPage === 'register' ? 'block' : 'none' }}>
           <SupplierRegistration />
@@ -119,7 +86,7 @@ function App() {
   );
 }
 
-function SubmitAttestationPage() {
+function SubmitAttestationPage({ onSubmitted }: { onSubmitted?: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<{ id: string; contentHash: string; productId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -191,14 +158,7 @@ function SubmitAttestationPage() {
         const body = await response.json();
         setResult({ id: body.id, contentHash: body.contentHash, productId: data.productId });
         setFormResetKey((k) => k + 1);
-
-        saveHistoryEntry({
-          productName: data.productName,
-          productId: data.productId,
-          attestationId: body.id,
-          contentHash: body.contentHash,
-          timestamp: new Date().toISOString(),
-        });
+        onSubmitted?.();
       } else {
         const body = await response.json().catch(() => null);
         const errorMessage = body?.error || `Server error (${response.status})`;
@@ -255,72 +215,6 @@ function SubmitAttestationPage() {
       <div className="card">
         <AttestationForm onSubmit={handleSubmit} disabled={submitting} resetKey={formResetKey} />
       </div>
-    </div>
-  );
-}
-
-function HistoryPage({ refreshKey }: { refreshKey: number }) {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setHistory(getHistory());
-  }, [refreshKey]);
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(text);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  }
-
-  return (
-    <div>
-      <h2>Submission History</h2>
-      <p>View previously submitted attestations and their status.</p>
-
-      {history.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-state-icon">📋</div>
-          <p style={{ margin: 0 }}>No submissions yet. Submit your first attestation to see it here.</p>
-        </div>
-      ) : (
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Product ID</th>
-                <th>Attestation ID</th>
-                <th>Timestamp</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {history.map((entry, idx) => (
-                <tr key={idx}>
-                  <td>{entry.productName}</td>
-                  <td>
-                    <code title={entry.productId}>{entry.productId.slice(0, 12)}…</code>
-                  </td>
-                  <td>
-                    <code title={entry.attestationId}>{entry.attestationId.slice(0, 12)}…</code>
-                  </td>
-                  <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                  <td>
-                    <button
-                      onClick={() => copyToClipboard(entry.attestationId)}
-                      className={`btn btn-sm ${copiedId === entry.attestationId ? 'btn-success' : 'btn-secondary'}`}
-                    >
-                      {copiedId === entry.attestationId ? '✓ Copied' : 'Copy ID'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </div>
   );
 }
