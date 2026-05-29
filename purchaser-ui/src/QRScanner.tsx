@@ -31,15 +31,12 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
           qrbox: { width: 250, height: 250 },
         },
         (decodedText) => {
-          // Validate UUID format
           if (UUID_REGEX.test(decodedText)) {
-            // Stop scanner before navigating
             if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
               scanner.stop().catch(() => {});
             }
             onProductScanned(decodedText);
           } else {
-            // Invalid QR code - not a UUID
             if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
               scanner.stop().catch(() => {});
             }
@@ -52,7 +49,7 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
           }
         },
         () => {
-          // QR code not detected in this frame - this is normal, no action needed
+          // QR code not detected in this frame - normal
         }
       )
       .catch((err: unknown) => {
@@ -91,31 +88,20 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
 
   if (error?.type === 'permission') {
     return (
-      <div
-        role="alert"
-        style={{
-          border: '1px solid #dc3545',
-          borderRadius: '8px',
-          padding: '2rem',
-          textAlign: 'center',
-          backgroundColor: '#fff5f5',
-        }}
-      >
-        <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📷</p>
-        <h3 style={{ color: '#dc3545', marginBottom: '0.75rem' }}>
+      <div role="alert" className="card" style={{ textAlign: 'center', borderColor: 'var(--color-error-border)', background: 'var(--color-error-bg)' }}>
+        <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📷</p>
+        <h3 style={{ color: 'var(--color-error)', marginBottom: '0.75rem' }}>
           Camera Access Required
         </h3>
-        <p style={{ marginBottom: '1rem', color: '#333' }}>{error.message}</p>
-        <div
-          style={{
-            textAlign: 'left',
-            backgroundColor: '#f8f9fa',
-            borderRadius: '4px',
-            padding: '1rem',
-            marginBottom: '1rem',
-            fontSize: '0.85rem',
-          }}
-        >
+        <p style={{ marginBottom: '1rem' }}>{error.message}</p>
+        <div style={{
+          textAlign: 'left',
+          backgroundColor: 'var(--color-border-light)',
+          borderRadius: 'var(--radius-md)',
+          padding: '1rem',
+          marginBottom: '1rem',
+          fontSize: '0.85rem',
+        }}>
           <p style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>
             To enable camera permissions:
           </p>
@@ -125,18 +111,7 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
             <li>Reload the page and try scanning again</li>
           </ol>
         </div>
-        <button
-          onClick={handleRescan}
-          style={{
-            padding: '0.5rem 1.5rem',
-            backgroundColor: '#0f3460',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-          }}
-        >
+        <button onClick={handleRescan} className="btn btn-primary">
           Try Again
         </button>
       </div>
@@ -145,43 +120,16 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
 
   if (error?.type === 'invalid-qr') {
     return (
-      <div
-        role="alert"
-        style={{
-          border: '1px solid #ffc107',
-          borderRadius: '8px',
-          padding: '2rem',
-          textAlign: 'center',
-          backgroundColor: '#fffbea',
-        }}
-      >
-        <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⚠️</p>
-        <h3 style={{ color: '#856404', marginBottom: '0.75rem' }}>
+      <div role="alert" className="card" style={{ textAlign: 'center', borderColor: 'var(--color-warning-border)', background: 'var(--color-warning-bg)' }}>
+        <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</p>
+        <h3 style={{ color: '#92400e', marginBottom: '0.75rem' }}>
           Unrecognized QR Code
         </h3>
-        <p style={{ marginBottom: '0.75rem', color: '#333' }}>{error.message}</p>
-        <p
-          style={{
-            fontSize: '0.8rem',
-            color: '#666',
-            marginBottom: '1rem',
-            wordBreak: 'break-all',
-          }}
-        >
+        <p style={{ marginBottom: '0.75rem' }}>{error.message}</p>
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem', wordBreak: 'break-all' }}>
           Scanned value: <code>{error.scannedValue}</code>
         </p>
-        <button
-          onClick={handleRescan}
-          style={{
-            padding: '0.5rem 1.5rem',
-            backgroundColor: '#0f3460',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-          }}
-        >
+        <button onClick={handleRescan} className="btn btn-primary">
           Scan Again
         </button>
       </div>
@@ -192,21 +140,10 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
     <div>
       <div
         id={containerRef.current}
-        style={{
-          width: '100%',
-          minHeight: '300px',
-          borderRadius: '8px',
-          overflow: 'hidden',
-        }}
+        className="qr-scanner-container"
+        style={{ width: '100%', minHeight: '300px' }}
       />
-      <p
-        style={{
-          textAlign: 'center',
-          fontSize: '0.85rem',
-          color: '#666',
-          marginTop: '0.75rem',
-        }}
-      >
+      <p className="qr-scanner-hint">
         Point your camera at a product QR code to scan
       </p>
     </div>

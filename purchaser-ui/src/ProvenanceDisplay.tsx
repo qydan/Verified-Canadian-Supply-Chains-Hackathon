@@ -83,7 +83,6 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
   const abortRef = useRef<AbortController | null>(null);
 
   const fetchProvenance = useCallback(() => {
-    // Abort any in-flight request
     if (abortRef.current) {
       abortRef.current.abort();
     }
@@ -91,7 +90,6 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
     const controller = new AbortController();
     abortRef.current = controller;
 
-    // 10-second timeout
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     setLoading(true);
@@ -138,10 +136,10 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
     return (
       <div style={{ textAlign: 'center', padding: '3rem' }}>
         <div style={{ marginBottom: '1rem' }}>
-          <LoadingSpinner />
+          <div className="spinner" role="status" aria-label="Loading" />
         </div>
-        <p style={{ color: '#666' }}>Loading provenance data...</p>
-        <p style={{ fontSize: '0.8rem', color: '#999' }}>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading provenance data...</p>
+        <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
           Product ID: <code>{productId}</code>
         </p>
       </div>
@@ -151,46 +149,20 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
   // --- Error State ---
   if (error) {
     return (
-      <div style={{
-        border: '1px solid #dc3545',
-        borderRadius: '8px',
-        padding: '2rem',
-        textAlign: 'center',
-        backgroundColor: '#fff5f5',
-      }}>
-        <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>⚠️</p>
-        <h3 style={{ color: '#dc3545', marginBottom: '0.75rem' }}>
+      <div className="card" style={{ textAlign: 'center', borderColor: 'var(--color-error-border)', background: 'var(--color-error-bg)' }}>
+        <p style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>⚠️</p>
+        <h3 style={{ color: 'var(--color-error)', marginBottom: '0.75rem' }}>
           Unable to Retrieve Provenance
         </h3>
-        <p style={{ marginBottom: '1rem', color: '#333' }}>{error}</p>
-        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1.5rem' }}>
+        <p style={{ marginBottom: '1rem' }}>{error}</p>
+        <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
           Product ID: <code>{productId}</code>
         </p>
         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-          <button
-            onClick={fetchProvenance}
-            style={{
-              padding: '0.5rem 1.5rem',
-              backgroundColor: '#0f3460',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
+          <button onClick={fetchProvenance} className="btn btn-primary">
             Retry
           </button>
-          <button
-            onClick={onScanAgain}
-            style={{
-              padding: '0.5rem 1.5rem',
-              backgroundColor: '#6c757d',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
+          <button onClick={onScanAgain} className="btn btn-secondary">
             Scan Another
           </button>
         </div>
@@ -202,74 +174,61 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
   if (!report) return null;
 
   return (
-    <div>
-      {/* Designation - most prominent element */}
+    <div className="fade-in">
+      {/* Designation Banner */}
       <DesignationBanner designation={report.designation} />
 
       {/* Canadian Content Percentage */}
-      <div style={{
-        textAlign: 'center',
-        margin: '1.5rem 0',
-        padding: '1rem',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-      }}>
-        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>
-          Canadian Content
-        </p>
-        <p style={{ fontSize: '2rem', fontWeight: 'bold', margin: 0 }}>
-          {report.canadianContentPercent.toFixed(2)}%
-        </p>
+      <div className="stats-card" style={{ margin: '1.5rem 0' }}>
+        <p className="stats-label">Canadian Content</p>
+        <p className="stats-value">{report.canadianContentPercent.toFixed(2)}%</p>
       </div>
 
       {/* Cost Breakdown */}
-      <div style={{
-        margin: '1.5rem 0',
-        padding: '1rem',
-        backgroundColor: '#f8f9fa',
-        borderRadius: '8px',
-      }}>
+      <div className="progress-bar-container">
         <h3 style={{ margin: '0 0 0.75rem', fontSize: '1rem' }}>Cost Breakdown</h3>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-          <span>Total Direct Costs:</span>
+          <span style={{ color: 'var(--color-text-secondary)' }}>Total Direct Costs:</span>
           <strong>${report.totalDirectCosts.toFixed(2)}</strong>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', fontSize: '0.85rem' }}>
-          <span>Canadian Direct Costs:</span>
+          <span style={{ color: 'var(--color-text-secondary)' }}>Canadian Direct Costs:</span>
           <strong>${report.canadianDirectCosts.toFixed(2)}</strong>
         </div>
-        <div style={{
-          height: '1.25rem',
-          borderRadius: '4px',
-          backgroundColor: '#dee2e6',
-          overflow: 'hidden',
-          position: 'relative',
-        }}>
-          <div style={{
-            height: '100%',
-            width: `${report.totalDirectCosts > 0 ? (report.canadianDirectCosts / report.totalDirectCosts) * 100 : 0}%`,
-            backgroundColor: '#28a745',
-            borderRadius: '4px 0 0 4px',
-            transition: 'width 0.3s ease',
-          }} />
+        <div className="progress-bar-track">
+          <div
+            className="progress-bar-fill"
+            style={{
+              width: `${report.totalDirectCosts > 0 ? (report.canadianDirectCosts / report.totalDirectCosts) * 100 : 0}%`,
+            }}
+          />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem', fontSize: '0.75rem', color: '#666' }}>
+        <div className="progress-labels">
           <span>🇨🇦 Canadian</span>
           <span>Non-Canadian</span>
         </div>
       </div>
 
       {/* Product Info */}
-      <div style={{ marginBottom: '1.5rem', fontSize: '0.85rem', color: '#666' }}>
-        <p><strong>Product:</strong> {report.productName}</p>
-        <p><strong>Product ID:</strong> <code>{report.productId}</code></p>
-        <p><strong>Chain Depth:</strong> {report.chainDepth} attestation(s)</p>
-        <p>
-          <strong>All Signatures Valid:</strong>{' '}
-          <span style={{ color: report.allSignaturesValid ? '#28a745' : '#dc3545' }}>
-            {report.allSignaturesValid ? '✓ Yes' : '✗ No'}
+      <div className="product-info">
+        <div className="product-info-item">
+          <span className="product-info-label">Product</span>
+          <span className="product-info-value">{report.productName}</span>
+        </div>
+        <div className="product-info-item">
+          <span className="product-info-label">Chain Depth</span>
+          <span className="product-info-value">{report.chainDepth} attestation(s)</span>
+        </div>
+        <div className="product-info-item">
+          <span className="product-info-label">Product ID</span>
+          <span className="product-info-value"><code>{report.productId}</code></span>
+        </div>
+        <div className="product-info-item">
+          <span className="product-info-label">Signatures</span>
+          <span className="product-info-value" style={{ color: report.allSignaturesValid ? 'var(--color-success)' : 'var(--color-error)' }}>
+            {report.allSignaturesValid ? '✓ All Valid' : '✗ Invalid Detected'}
           </span>
-        </p>
+        </div>
       </div>
 
       {/* Anomaly Warnings */}
@@ -282,17 +241,7 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
 
       {/* Actions */}
       <div style={{ marginTop: '2rem', textAlign: 'center' }}>
-        <button
-          onClick={onScanAgain}
-          style={{
-            padding: '0.5rem 1.5rem',
-            backgroundColor: '#0f3460',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={onScanAgain} className="btn btn-primary">
           Scan Another Product
         </button>
       </div>
@@ -304,72 +253,38 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
 // Sub-components
 // ============================================================================
 
-function LoadingSpinner() {
-  return (
-    <div
-      role="status"
-      aria-label="Loading"
-      style={{
-        display: 'inline-block',
-        width: '40px',
-        height: '40px',
-        border: '4px solid #e9ecef',
-        borderTop: '4px solid #0f3460',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite',
-      }}
-    >
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
 function DesignationBanner({ designation }: { designation: ProvenanceReport['designation'] }) {
   const config = {
     PRODUCT_OF_CANADA: {
       label: 'Product of Canada',
-      color: '#155724',
-      bg: '#d4edda',
-      border: '#c3e6cb',
+      className: 'product-of-canada',
       icon: '🍁',
     },
     MADE_IN_CANADA: {
       label: 'Made in Canada',
-      color: '#856404',
-      bg: '#fff3cd',
-      border: '#ffc107',
+      className: 'made-in-canada',
       icon: '🏭',
     },
     NONE: {
       label: 'No Canadian Designation',
-      color: '#721c24',
-      bg: '#f8d7da',
-      border: '#f5c6cb',
+      className: 'no-designation',
       icon: '—',
     },
   }[designation];
 
   return (
-    <div style={{
-      textAlign: 'center',
-      padding: '1.5rem',
-      borderRadius: '12px',
-      backgroundColor: config.bg,
-      border: `2px solid ${config.border}`,
-    }}>
-      <p style={{ fontSize: '2rem', margin: '0 0 0.25rem' }}>{config.icon}</p>
-      <h2 style={{ color: config.color, margin: 0, fontSize: '1.75rem' }}>
-        {config.label}
-      </h2>
+    <div className={`designation-banner ${config.className}`}>
+      <p className="designation-icon">{config.icon}</p>
+      <h2 className="designation-label">{config.label}</h2>
     </div>
   );
 }
 
 function AnomalyWarnings({ issues }: { issues: Issue[] }) {
   const severityConfig = {
-    CRITICAL: { color: '#721c24', bg: '#f8d7da', border: '#f5c6cb', icon: '🚨' },
-    WARNING: { color: '#856404', bg: '#fff3cd', border: '#ffc107', icon: '⚠️' },
-    INFO: { color: '#0c5460', bg: '#d1ecf1', border: '#bee5eb', icon: 'ℹ️' },
+    CRITICAL: { className: 'issue-critical', icon: '🚨', color: '#991b1b' },
+    WARNING: { className: 'issue-warning', icon: '⚠️', color: '#92400e' },
+    INFO: { className: 'issue-info', icon: 'ℹ️', color: '#1e40af' },
   };
 
   return (
@@ -379,34 +294,14 @@ function AnomalyWarnings({ issues }: { issues: Issue[] }) {
         {issues.map((issue, idx) => {
           const cfg = severityConfig[issue.severity] || severityConfig.INFO;
           return (
-            <div
-              key={idx}
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '6px',
-                backgroundColor: cfg.bg,
-                border: `1px solid ${cfg.border}`,
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '0.5rem',
-              }}
-            >
+            <div key={idx} className={`issue-item ${cfg.className}`}>
               <span>{cfg.icon}</span>
               <div style={{ flex: 1 }}>
-                <span style={{
-                  fontWeight: 'bold',
-                  color: cfg.color,
-                  fontSize: '0.8rem',
-                  textTransform: 'uppercase',
-                }}>
+                <span className="issue-severity" style={{ color: cfg.color }}>
                   {issue.severity}
                 </span>
-                <span style={{ fontSize: '0.8rem', color: '#666', marginLeft: '0.5rem' }}>
-                  {issue.type}
-                </span>
-                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#333' }}>
-                  {issue.description}
-                </p>
+                <span className="issue-type">{issue.type}</span>
+                <p className="issue-description">{issue.description}</p>
               </div>
             </div>
           );
@@ -419,79 +314,41 @@ function AnomalyWarnings({ issues }: { issues: Issue[] }) {
 function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
   if (chain.length === 0) {
     return (
-      <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
+      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
         No supply chain data available.
       </div>
     );
   }
 
-  // Build a map of attestation id -> index for edge drawing
   const idToIndex = new Map<string, number>();
   chain.forEach((att, idx) => idToIndex.set(att.id, idx));
 
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <h3 style={{ marginBottom: '0.75rem' }}>Supply Chain</h3>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '0.25rem',
-      }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
         {chain.map((attestation, idx) => (
           <div key={attestation.id}>
-            {/* Node */}
-            <div style={{
-              border: '1px solid #dee2e6',
-              borderRadius: '8px',
-              padding: '0.75rem 1rem',
-              backgroundColor: attestation.isTransformation ? '#e8f4fd' : '#fff',
-              position: 'relative',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className={`chain-node ${attestation.isTransformation ? 'transformation' : ''}`}>
+              <div className="chain-node-header">
                 <div>
-                  <strong style={{ fontSize: '0.9rem' }}>{attestation.productName}</strong>
-                  <span style={{
-                    marginLeft: '0.5rem',
-                    fontSize: '0.75rem',
-                    color: '#666',
-                    backgroundColor: '#f0f0f0',
-                    padding: '0.1rem 0.4rem',
-                    borderRadius: '3px',
-                  }}>
+                  <span className="chain-node-name">{attestation.productName}</span>
+                  <span className="badge badge-location">
                     {countryFlag(attestation.location)} {attestation.location}
                   </span>
                   {attestation.isTransformation && (
-                    <span style={{
-                      marginLeft: '0.5rem',
-                      fontSize: '0.7rem',
-                      color: '#0c5460',
-                      backgroundColor: '#d1ecf1',
-                      padding: '0.1rem 0.4rem',
-                      borderRadius: '3px',
-                    }}>
-                      transformation
-                    </span>
+                    <span className="badge badge-transform">transformation</span>
                   )}
                 </div>
-                <span style={{ fontSize: '0.7rem', color: '#999' }}>
-                  {attestation.id.slice(0, 8)}…
-                </span>
+                <span className="chain-node-id">{attestation.id.slice(0, 8)}…</span>
               </div>
-              {/* Show inputs as directed edges */}
               {attestation.inputs.length > 0 && (
-                <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#666' }}>
+                <div className="chain-inputs">
                   {attestation.inputs.map((input, iIdx) => {
                     const sourceIdx = idToIndex.get(input.attestationId);
                     const sourceAtt = sourceIdx !== undefined ? chain[sourceIdx] : null;
                     return (
-                      <span key={iIdx} style={{
-                        display: 'inline-block',
-                        marginRight: '0.5rem',
-                        backgroundColor: '#f8f9fa',
-                        padding: '0.15rem 0.4rem',
-                        borderRadius: '3px',
-                        border: '1px solid #e9ecef',
-                      }}>
+                      <span key={iIdx} className="chain-input-tag">
                         ← {sourceAtt ? sourceAtt.productName : input.attestationId.slice(0, 8) + '…'}
                         {' '}({input.quantityUsed} {input.unit})
                       </span>
@@ -500,11 +357,8 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                 </div>
               )}
             </div>
-            {/* Arrow between nodes */}
             {idx < chain.length - 1 && (
-              <div style={{ textAlign: 'center', color: '#adb5bd', fontSize: '1.2rem', lineHeight: '1' }}>
-                ↓
-              </div>
+              <div className="chain-arrow">↓</div>
             )}
           </div>
         ))}

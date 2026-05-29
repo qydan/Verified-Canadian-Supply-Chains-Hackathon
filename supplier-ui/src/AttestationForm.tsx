@@ -175,74 +175,43 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
     setInputReferences(updated);
   }
 
-  const fieldStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '0.9rem',
-    boxSizing: 'border-box',
-  };
-
-  const errorFieldStyle: React.CSSProperties = {
-    ...fieldStyle,
-    borderColor: '#e74c3c',
-  };
-
-  const errorTextStyle: React.CSSProperties = {
-    color: '#e74c3c',
-    fontSize: '0.8rem',
-    marginTop: '0.25rem',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontWeight: 600,
-    marginBottom: '0.25rem',
-    fontSize: '0.9rem',
-  };
-
-  const fieldGroupStyle: React.CSSProperties = {
-    marginBottom: '1rem',
-  };
-
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <div style={fieldGroupStyle}>
-        <label style={labelStyle} htmlFor="productName">Product Name *</label>
+      <div className="form-group">
+        <label className="form-label" htmlFor="productName">Product Name *</label>
         <input
           id="productName"
           type="text"
           value={productName}
           onChange={(e) => setProductName(e.target.value)}
-          style={errors.productName ? errorFieldStyle : fieldStyle}
+          className={`form-input ${errors.productName ? 'error' : ''}`}
           disabled={disabled}
           placeholder="e.g., Maple Syrup Grade A"
         />
-        {errors.productName && <div style={errorTextStyle}>{errors.productName}</div>}
+        {errors.productName && <div className="form-error">{errors.productName}</div>}
       </div>
 
-      <div style={fieldGroupStyle}>
-        <label style={labelStyle} htmlFor="productId">Product ID *</label>
+      <div className="form-group">
+        <label className="form-label" htmlFor="productId">Product ID *</label>
         <input
           id="productId"
           type="text"
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
-          style={errors.productId ? errorFieldStyle : fieldStyle}
+          className={`form-input ${errors.productId ? 'error' : ''}`}
           disabled={disabled}
           placeholder="e.g., 550e8400-e29b-41d4-a716-446655440000"
         />
-        {errors.productId && <div style={errorTextStyle}>{errors.productId}</div>}
+        {errors.productId && <div className="form-error">{errors.productId}</div>}
       </div>
 
-      <div style={fieldGroupStyle}>
-        <label style={labelStyle} htmlFor="location">Location *</label>
+      <div className="form-group">
+        <label className="form-label" htmlFor="location">Location *</label>
         <select
           id="location"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          style={errors.location ? errorFieldStyle : fieldStyle}
+          className={`form-input form-select ${errors.location ? 'error' : ''}`}
           disabled={disabled}
         >
           <option value="">Select country...</option>
@@ -252,12 +221,12 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
             </option>
           ))}
         </select>
-        {errors.location && <div style={errorTextStyle}>{errors.location}</div>}
+        {errors.location && <div className="form-error">{errors.location}</div>}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-        <div>
-          <label style={labelStyle} htmlFor="materialCost">Material Cost *</label>
+      <div className="form-grid">
+        <div className="form-group">
+          <label className="form-label" htmlFor="materialCost">Material Cost *</label>
           <input
             id="materialCost"
             type="number"
@@ -265,14 +234,14 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
             step="0.01"
             value={materialCost}
             onChange={(e) => setMaterialCost(e.target.value)}
-            style={errors.materialCost ? errorFieldStyle : fieldStyle}
+            className={`form-input ${errors.materialCost ? 'error' : ''}`}
             disabled={disabled}
             placeholder="0.00"
           />
-          {errors.materialCost && <div style={errorTextStyle}>{errors.materialCost}</div>}
+          {errors.materialCost && <div className="form-error">{errors.materialCost}</div>}
         </div>
-        <div>
-          <label style={labelStyle} htmlFor="labourCost">Labour Cost *</label>
+        <div className="form-group">
+          <label className="form-label" htmlFor="labourCost">Labour Cost *</label>
           <input
             id="labourCost"
             type="number"
@@ -280,17 +249,17 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
             step="0.01"
             value={labourCost}
             onChange={(e) => setLabourCost(e.target.value)}
-            style={errors.labourCost ? errorFieldStyle : fieldStyle}
+            className={`form-input ${errors.labourCost ? 'error' : ''}`}
             disabled={disabled}
             placeholder="0.00"
           />
-          {errors.labourCost && <div style={errorTextStyle}>{errors.labourCost}</div>}
+          {errors.labourCost && <div className="form-error">{errors.labourCost}</div>}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-        <div>
-          <label style={labelStyle} htmlFor="outputQuantity">Output Quantity *</label>
+      <div className="form-grid">
+        <div className="form-group">
+          <label className="form-label" htmlFor="outputQuantity">Output Quantity *</label>
           <input
             id="outputQuantity"
             type="number"
@@ -298,64 +267,55 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
             step="0.01"
             value={outputQuantity}
             onChange={(e) => setOutputQuantity(e.target.value)}
-            style={errors.outputQuantity ? errorFieldStyle : fieldStyle}
+            className={`form-input ${errors.outputQuantity ? 'error' : ''}`}
             disabled={disabled}
             placeholder="1"
           />
-          {errors.outputQuantity && <div style={errorTextStyle}>{errors.outputQuantity}</div>}
+          {errors.outputQuantity && <div className="form-error">{errors.outputQuantity}</div>}
         </div>
-        <div>
-          <label style={labelStyle} htmlFor="outputUnit">Output Unit *</label>
+        <div className="form-group">
+          <label className="form-label" htmlFor="outputUnit">Output Unit *</label>
           <input
             id="outputUnit"
             type="text"
             value={outputUnit}
             onChange={(e) => setOutputUnit(e.target.value)}
-            style={errors.outputUnit ? errorFieldStyle : fieldStyle}
+            className={`form-input ${errors.outputUnit ? 'error' : ''}`}
             disabled={disabled}
             placeholder="e.g., kg, L, units"
           />
-          {errors.outputUnit && <div style={errorTextStyle}>{errors.outputUnit}</div>}
+          {errors.outputUnit && <div className="form-error">{errors.outputUnit}</div>}
         </div>
       </div>
 
-      <div style={{ ...fieldGroupStyle, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+      <div className="checkbox-group">
         <input
           id="isTransformation"
           type="checkbox"
           checked={isTransformation}
           onChange={(e) => setIsTransformation(e.target.checked)}
           disabled={disabled}
-          style={{ width: '1.2rem', height: '1.2rem' }}
         />
-        <label htmlFor="isTransformation" style={{ fontWeight: 600, fontSize: '0.9rem', cursor: 'pointer' }}>
+        <label htmlFor="isTransformation">
           Is Transformation Step
         </label>
       </div>
 
-      <div style={{ marginBottom: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h3 style={{ margin: 0, fontSize: '1rem' }}>Input References</h3>
+      <div className="input-refs-section">
+        <div className="input-refs-header">
+          <h3 style={{ margin: 0 }}>Input References</h3>
           <button
             type="button"
             onClick={addInputReference}
             disabled={disabled}
-            style={{
-              background: '#27ae60',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '0.4rem 0.75rem',
-              cursor: 'pointer',
-              fontSize: '0.85rem',
-            }}
+            className="btn btn-success btn-sm"
           >
             + Add Input
           </button>
         </div>
 
         {inputReferences.length === 0 && (
-          <p style={{ color: '#888', fontSize: '0.85rem', fontStyle: 'italic' }}>
+          <p className="input-ref-empty">
             No input references. Click "Add Input" to reference upstream attestations.
           </p>
         )}
@@ -363,31 +323,18 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
         {inputReferences.map((ref, index) => {
           const refError = errors.inputReferences?.[index];
           return (
-            <div
-              key={index}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '2fr 1fr 1fr auto',
-                gap: '0.5rem',
-                alignItems: 'start',
-                marginBottom: '0.75rem',
-                padding: '0.75rem',
-                background: '#f9f9f9',
-                borderRadius: '4px',
-                border: '1px solid #eee',
-              }}
-            >
+            <div key={index} className="input-ref-row">
               <div>
                 <input
                   type="text"
                   value={ref.attestationId}
                   onChange={(e) => updateInputReference(index, 'attestationId', e.target.value)}
-                  style={refError?.attestationId ? errorFieldStyle : fieldStyle}
+                  className={`form-input ${refError?.attestationId ? 'error' : ''}`}
                   disabled={disabled}
                   placeholder="Attestation ID"
                   aria-label={`Input reference ${index + 1} attestation ID`}
                 />
-                {refError?.attestationId && <div style={errorTextStyle}>{refError.attestationId}</div>}
+                {refError?.attestationId && <div className="form-error">{refError.attestationId}</div>}
               </div>
               <div>
                 <input
@@ -396,39 +343,30 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
                   step="0.01"
                   value={ref.quantityUsed}
                   onChange={(e) => updateInputReference(index, 'quantityUsed', e.target.value)}
-                  style={refError?.quantityUsed ? errorFieldStyle : fieldStyle}
+                  className={`form-input ${refError?.quantityUsed ? 'error' : ''}`}
                   disabled={disabled}
                   placeholder="Qty"
                   aria-label={`Input reference ${index + 1} quantity used`}
                 />
-                {refError?.quantityUsed && <div style={errorTextStyle}>{refError.quantityUsed}</div>}
+                {refError?.quantityUsed && <div className="form-error">{refError.quantityUsed}</div>}
               </div>
               <div>
                 <input
                   type="text"
                   value={ref.unit}
                   onChange={(e) => updateInputReference(index, 'unit', e.target.value)}
-                  style={refError?.unit ? errorFieldStyle : fieldStyle}
+                  className={`form-input ${refError?.unit ? 'error' : ''}`}
                   disabled={disabled}
                   placeholder="Unit"
                   aria-label={`Input reference ${index + 1} unit`}
                 />
-                {refError?.unit && <div style={errorTextStyle}>{refError.unit}</div>}
+                {refError?.unit && <div className="form-error">{refError.unit}</div>}
               </div>
               <button
                 type="button"
                 onClick={() => removeInputReference(index)}
                 disabled={disabled}
-                style={{
-                  background: '#e74c3c',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '0.4rem 0.6rem',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  marginTop: '0.1rem',
-                }}
+                className="btn btn-danger btn-sm"
                 aria-label={`Remove input reference ${index + 1}`}
               >
                 ✕
@@ -441,17 +379,7 @@ export function AttestationForm({ onSubmit, disabled = false }: AttestationFormP
       <button
         type="submit"
         disabled={disabled}
-        style={{
-          width: '100%',
-          padding: '0.75rem',
-          background: disabled ? '#95a5a6' : '#2c3e50',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          fontSize: '1rem',
-          fontWeight: 600,
-          cursor: disabled ? 'not-allowed' : 'pointer',
-        }}
+        className="btn btn-primary btn-full"
       >
         {disabled ? 'Submitting...' : 'Sign & Submit Attestation'}
       </button>
