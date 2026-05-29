@@ -626,13 +626,13 @@ code {
 }
 
 .qr-scanner-container video {
-  max-height: 300px;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
 }
 
 .qr-scanner-container img {
-  max-height: 300px;
-  object-fit: contain;
+  display: none;
 }
 
 .qr-scanner-hint {

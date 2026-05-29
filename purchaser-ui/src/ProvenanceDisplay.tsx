@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
+import { SupplyChainMap } from './SupplyChainMap';
 
 // ============================================================================
 // Helpers
@@ -219,24 +221,30 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
       </div>
 
       {/* Product Info */}
-      <div className="product-info">
-        <div className="product-info-item">
-          <span className="product-info-label">Product</span>
-          <span className="product-info-value">{report.productName}</span>
+      <div className="product-info" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="product-info-item">
+            <span className="product-info-label">Product</span>
+            <span className="product-info-value">{report.productName}</span>
+          </div>
+          <div className="product-info-item">
+            <span className="product-info-label">Chain Depth</span>
+            <span className="product-info-value">{report.chainDepth} attestation(s)</span>
+          </div>
+          <div className="product-info-item">
+            <span className="product-info-label">Product ID</span>
+            <span className="product-info-value"><code>{report.productId}</code></span>
+          </div>
+          <div className="product-info-item">
+            <span className="product-info-label">Signatures</span>
+            <span className="product-info-value" style={{ color: report.allSignaturesValid ? 'var(--color-success)' : 'var(--color-error)' }}>
+              {report.allSignaturesValid ? '✓ All Valid' : '✗ Invalid Detected'}
+            </span>
+          </div>
         </div>
-        <div className="product-info-item">
-          <span className="product-info-label">Chain Depth</span>
-          <span className="product-info-value">{report.chainDepth} attestation(s)</span>
-        </div>
-        <div className="product-info-item">
-          <span className="product-info-label">Product ID</span>
-          <span className="product-info-value"><code>{report.productId}</code></span>
-        </div>
-        <div className="product-info-item">
-          <span className="product-info-label">Signatures</span>
-          <span className="product-info-value" style={{ color: report.allSignaturesValid ? 'var(--color-success)' : 'var(--color-error)' }}>
-            {report.allSignaturesValid ? '✓ All Valid' : '✗ Invalid Detected'}
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+          <QRCodeSVG value={report.productId} size={80} />
+          <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', marginTop: '0.35rem' }}>Scan to verify</span>
         </div>
       </div>
 
@@ -244,6 +252,9 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
       {report.issues.length > 0 && (
         <AnomalyWarnings issues={report.issues} />
       )}
+
+      {/* Supply Chain Map */}
+      <SupplyChainMap chain={report.chain} />
 
       {/* Supply Chain Visualization */}
       <SupplyChainVisualization chain={report.chain} />

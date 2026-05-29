@@ -16,67 +16,84 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
   const [scanning, setScanning] = useState(true);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<string>('qr-reader-' + Math.random().toString(36).slice(2));
+  const startingRef = useRef(false);
 
   useEffect(() => {
     if (!scanning) return;
 
-    const scanner = new Html5Qrcode(containerRef.current);
-    scannerRef.current = scanner;
+    // Prevent double-start from StrictMode
+    if (startingRef.current) return;
+    startingRef.current = true;
 
-    scanner
-      .start(
-        { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText) => {
-          if (UUID_REGEX.test(decodedText)) {
-            if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-              scanner.stop().catch(() => {});
+    // Small delay to ensure the DOM container is ready after StrictMode remount
+    const startTimeout = setTimeout(() => {
+      const scanner = new Html5Qrcode(containerRef.current);
+      scannerRef.current = scanner;
+
+      scanner
+        .start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+          },
+          (decodedText) => {
+            if (UUID_REGEX.test(decodedText)) {
+              if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                scanner.stop().catch(() => {});
+              }
+              onProductScanned(decodedText);
+            } else {
+              if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+                scanner.stop().catch(() => {});
+              }
+              setScanning(false);
+              setError({
+                type: 'invalid-qr',
+                message: 'The scanned QR code does not contain a recognized product code. Product codes must be in UUID format.',
+                scannedValue: decodedText,
+              });
             }
-            onProductScanned(decodedText);
-          } else {
-            if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-              scanner.stop().catch(() => {});
-            }
-            setScanning(false);
+          },
+          () => {
+            // QR code not detected in this frame - normal
+          }
+        )
+        .catch((err: unknown) => {
+          const errorMessage = err instanceof Error ? err.message : String(err);
+          setScanning(false);
+
+          if (
+            errorMessage.toLowerCase().includes('permission') ||
+            errorMessage.toLowerCase().includes('notallowederror') ||
+            errorMessage.toLowerCase().includes('denied') ||
+            errorMessage.toLowerCase().includes('not allowed')
+          ) {
             setError({
-              type: 'invalid-qr',
-              message: 'The scanned QR code does not contain a recognized product code. Product codes must be in UUID format.',
-              scannedValue: decodedText,
+              type: 'permission',
+              message: 'Camera access is required for QR scanning.',
+            });
+          } else {
+            setError({
+              type: 'permission',
+              message: `Unable to access camera: ${errorMessage}`,
             });
           }
-        },
-        () => {
-          // QR code not detected in this frame - normal
-        }
-      )
-      .catch((err: unknown) => {
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        setScanning(false);
-
-        if (
-          errorMessage.toLowerCase().includes('permission') ||
-          errorMessage.toLowerCase().includes('notallowederror') ||
-          errorMessage.toLowerCase().includes('denied') ||
-          errorMessage.toLowerCase().includes('not allowed')
-        ) {
-          setError({
-            type: 'permission',
-            message: 'Camera access is required for QR scanning.',
-          });
-        } else {
-          setError({
-            type: 'permission',
-            message: `Unable to access camera: ${errorMessage}`,
-          });
-        }
-      });
+        });
+    }, 100);
 
     return () => {
-      if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-        scanner.stop().catch(() => {});
+      clearTimeout(startTimeout);
+      startingRef.current = false;
+      if (scannerRef.current) {
+        try {
+          if (scannerRef.current.getState() === Html5QrcodeScannerState.SCANNING) {
+            scannerRef.current.stop().catch(() => {});
+          }
+        } catch {
+          // Scanner may already be cleared
+        }
+        scannerRef.current = null;
       }
     };
   }, [scanning, onProductScanned]);
@@ -141,7 +158,7 @@ export function QRScanner({ onProductScanned }: QRScannerProps) {
       <div
         id={containerRef.current}
         className="qr-scanner-container"
-        style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}
+        style={{ width: '300px', height: '300px', margin: '0 auto' }}
       />
       <p className="qr-scanner-hint">
         Point your camera at a product QR code to scan
