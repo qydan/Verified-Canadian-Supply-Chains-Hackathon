@@ -138,5 +138,53 @@ export function createSuppliersRouter(): Router {
     res.status(200).json(supplier);
   });
 
+  // GET /suppliers/:id/attestations - Get all attestations by a supplier
+  router.get('/:id/attestations', (req: Request, res: Response) => {
+    const db = req.app.get('db') as Database.Database | undefined;
+    if (!db) {
+      res.status(503).json({ error: 'Database unavailable' });
+      return;
+    }
+
+    const supplier = db.prepare('SELECT id FROM suppliers WHERE id = ?').get(req.params.id);
+    if (!supplier) {
+      res.status(404).json({ error: 'Supplier not found' });
+      return;
+    }
+
+    const rows = db.prepare(`
+      SELECT id, product_name, product_id, location, timestamp,
+             is_transformation, material_cost, labour_cost, output_quantity, output_unit
+      FROM attestations WHERE supplier_id = ?
+      ORDER BY timestamp DESC
+    `).all(req.params.id) as Array<{
+      id: string;
+      product_name: string;
+      product_id: string;
+      location: string;
+      timestamp: string;
+      is_transformation: number;
+      material_cost: number;
+      labour_cost: number;
+      output_quantity: number;
+      output_unit: string;
+    }>;
+
+    const attestations = rows.map((r) => ({
+      id: r.id,
+      productName: r.product_name,
+      productId: r.product_id,
+      location: r.location,
+      timestamp: r.timestamp,
+      isTransformation: r.is_transformation === 1,
+      materialCost: r.material_cost,
+      labourCost: r.labour_cost,
+      outputQuantity: r.output_quantity,
+      outputUnit: r.output_unit,
+    }));
+
+    res.status(200).json(attestations);
+  });
+
   return router;
 }

@@ -3,9 +3,10 @@ import nacl from 'tweetnacl';
 import { QRCodeSVG } from 'qrcode.react';
 import { AttestationForm, AttestationFormData } from './AttestationForm';
 import { SupplierRegistration } from './SupplierRegistration';
+import { SupplierDashboard } from './SupplierDashboard';
 import { canonicalize } from './crypto';
 
-type Page = 'submit' | 'history' | 'register';
+type Page = 'dashboard' | 'submit' | 'history' | 'register';
 
 interface HistoryEntry {
   productName: string;
@@ -50,7 +51,7 @@ function saveHistoryEntry(entry: HistoryEntry) {
 }
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>('submit');
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
   const [historyVersion, setHistoryVersion] = useState(0);
 
   function handlePageChange(page: Page) {
@@ -71,6 +72,12 @@ function App() {
 
       <nav className="app-nav">
         <button
+          onClick={() => handlePageChange('dashboard')}
+          className={`nav-btn ${currentPage === 'dashboard' ? 'active' : ''}`}
+        >
+          Dashboard
+        </button>
+        <button
           onClick={() => handlePageChange('submit')}
           className={`nav-btn ${currentPage === 'submit' ? 'active' : ''}`}
         >
@@ -80,17 +87,20 @@ function App() {
           onClick={() => handlePageChange('history')}
           className={`nav-btn ${currentPage === 'history' ? 'active' : ''}`}
         >
-          Submission History
+          History
         </button>
         <button
           onClick={() => handlePageChange('register')}
           className={`nav-btn ${currentPage === 'register' ? 'active' : ''}`}
         >
-          Register Supplier
+          Register
         </button>
       </nav>
 
       <main className="app-main">
+        <div className="fade-in" style={{ display: currentPage === 'dashboard' ? 'block' : 'none' }}>
+          <SupplierDashboard />
+        </div>
         <div className="fade-in" style={{ display: currentPage === 'submit' ? 'block' : 'none' }}>
           <SubmitAttestationPage />
         </div>

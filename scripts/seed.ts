@@ -448,6 +448,44 @@ async function main() {
   console.log('');
 
   // =========================================================================
+  // Chain 7: ANOMALY — Replay Attack (same battery used in two products)
+  // Triggers REPLAY_DETECTED when the same input is used across products
+  // =========================================================================
+  console.log('⚠️  Chain 7: ANOMALY — Replay Attack (shared battery across products)');
+
+  const replayDroneId = '17a8b9c0-d1e2-4f3a-4b5c-6d7e8f901234';
+
+  // This drone reuses cnBattery from Chain 2 (cargoDroneId) — cross-product replay!
+  const replayFrame = await submit(prairieCarbon, prairieCarbonId,
+    p('Lightweight Recon Frame', replayDroneId, prairieCarbonId, 'CA', 180, 100, 10, 'units', daysAgo(8), true));
+
+  await submit(mapleDrone, mapleDroneId,
+    p('Counterfeit Scout Drone', replayDroneId, mapleDroneId, 'CA', 30, 200, 1, 'units', daysAgo(5), true,
+      [{ attestationId: replayFrame.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: cnBattery.id, quantityUsed: 1, unit: 'units' }]));
+
+  console.log('');
+
+  // =========================================================================
+  // Chain 8: ANOMALY — Quantity Exceeded (claims more material than produced)
+  // Triggers QUANTITY_EXCEEDS_UPSTREAM
+  // =========================================================================
+  console.log('⚠️  Chain 8: ANOMALY — Quantity Exceeded (over-claiming materials)');
+
+  const quantityDroneId = '28b9c0d1-e2f3-4a4b-5c6d-7e8f90123456';
+
+  // This small batch only produced 5 units
+  const smallBatch = await submit(bcPrecision, bcPrecisionId,
+    p('Limited Run Motor Set', quantityDroneId, bcPrecisionId, 'CA', 300, 200, 5, 'units', daysAgo(15), true));
+
+  // But this assembly claims to use 10 of them — impossible!
+  await submit(mapleDrone, mapleDroneId,
+    p('Overclaimed Assembly Drone', quantityDroneId, mapleDroneId, 'CA', 50, 300, 1, 'units', daysAgo(7), true,
+      [{ attestationId: smallBatch.id, quantityUsed: 10, unit: 'units' }]));
+
+  console.log('');
+
+  // =========================================================================
   // Done
   // =========================================================================
   console.log('✅ Seed complete!\n');
@@ -458,6 +496,8 @@ async function main() {
   console.log(`  🛡️  Made in Canada — Defence VTOL (12):       ${defenceDroneId}`);
   console.log(`  🌾 Product of Canada — Agri Drone (6):       ${agriDroneId}`);
   console.log(`  🚢 Made in Canada — Maritime Drone (9):      ${maritimeDroneId}`);
+  console.log(`  ⚠️  ANOMALY — Replay Attack:                  ${replayDroneId}`);
+  console.log(`  ⚠️  ANOMALY — Quantity Exceeded:              ${quantityDroneId}`);
   console.log('');
   console.log('Countries represented: CA, US, CN, DE, JP, KR, GB, IL, FR, IN, TW');
   console.log('Paste any product ID into the Purchaser UI to see the provenance report.');
