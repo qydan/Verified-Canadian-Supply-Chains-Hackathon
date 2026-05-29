@@ -60,7 +60,17 @@ Then open:
 ## Running (WSL/Linux/Mac — with Make)
 
 ```bash
+# Start all services
 make dev
+
+# Seed demo data (requires backend running)
+make seed
+
+# Stop all services
+make stop
+
+# Reset database and start fresh
+make reset
 ```
 
 That starts all three services with hot reload.
@@ -82,12 +92,7 @@ purchaser-ui/     → React app for scanning QR codes and viewing provenance
 
 ## What to Work On
 
-Check `improvements.md` for a prioritized list of things to improve. The high-impact items are:
-
-1. Seed data script (so the demo isn't empty)
-2. Better supply chain graph visualization
-3. Dashboard with charts
-4. QR code generation after submission
+Check `improvements.md` for a prioritized list of completed features and remaining improvements.
 
 ## How the API Works
 
@@ -96,6 +101,7 @@ The backend runs on port 8080. The frontend UIs proxy `/api/*` requests to it (V
 Key endpoints:
 - `POST /suppliers` — Register a supplier (name, publicKey, location)
 - `POST /attestations` — Submit a signed attestation
+- `GET /attestations/search?q=` — Search attestations
 - `GET /products/:id/provenance` — Get full provenance report
 - `GET /health` — Health check
 
