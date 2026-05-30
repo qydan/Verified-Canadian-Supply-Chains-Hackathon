@@ -44,9 +44,9 @@ interface AttestationInput {
   id: string;                     // maps to attestation_id in the spec
   supplierId: string;             // maps to supplier_id
   location: string;               // maps to performed_in_country
-  actionType: string;             // maps to action_type  ← ADD TO YOUR INTERFACE
-  labourHours: number;            // maps to costs.labour_hours  ← ADD TO YOUR INTERFACE
-  labourCost: number;             // maps to costs.labour_cost_cad (already exists)
+  actionType: string;             // maps to action_type
+  labourHours: number;            // maps to costs.labour_hours
+  labourCost: number;             // maps to costs.labour_cost_cad
 }
 
 interface StatisticalIssue {
@@ -54,6 +54,28 @@ interface StatisticalIssue {
   attestationId: string;
   details: string;
   confidence: "high" | "medium";
+}
+
+/** Adapter: convert OfficialAttestation to the shape this module expects. */
+export interface OfficialAttestationLike {
+  attestation_id: string;
+  supplier_id: string;
+  performed_in_country: string;
+  action_type: string;
+  timestamp: string;
+  parents: Array<{ attestation_id: string; content_hash: string; quantity_consumed: number; unit: string }>;
+  costs: { labour_hours: number; labour_cost_cad: number; material_cad: number };
+}
+
+export function adaptAttestation(att: OfficialAttestationLike): AttestationInput {
+  return {
+    id: att.attestation_id,
+    supplierId: att.supplier_id,
+    location: att.performed_in_country,
+    actionType: att.action_type,
+    labourHours: att.costs.labour_hours,
+    labourCost: att.costs.labour_cost_cad,
+  };
 }
 
 // -------------------------------------------------------------------------
@@ -111,35 +133,19 @@ const SUPPLIER_USUAL_COUNTRY: Record<string, string[]> = {
   "sup-tbs":       ["EU"],
 };
 
-// Z-score threshold — calibrated to F1=0.633 on training data.
-// Do not change without re-running the Python eval.
-const Z_THRESHOLD = 3.0;
+// Z-score thresholds — calibrated per-check to maximize detection with zero FPs on clean chains.
+// Each threshold is set just above the maximum z-score observed in 705 clean training chains.
+const Z_THRESHOLD_ORIGIN = 3.0;       // Origin check (supplier country mismatch)
+const Z_THRESHOLD_LABOUR_HOURS = 2.8; // Labour hours (clean max: 2.73)
+const Z_THRESHOLD_LABOUR_COST = 4.0;  // Labour cost CAD (clean max: 3.93)
+const Z_THRESHOLD_IMPLIED_RATE = 3.6; // Implied hourly rate (clean max: 3.59)
+
+// Timing threshold: minimum parent-child gap in hours.
+// Clean chains never have gaps below 24h; perturbed timing outliers do.
+const MIN_GAP_HOURS = 24.0;
 
 // -------------------------------------------------------------------------
 // Public API
-// -------------------------------------------------------------------------
-
-/**
- * Run all statistical checks over a list of attestations.
- * Call this from detectAll() alongside your rule-based checks.
- */
-export function checkStatisticalAnomalies(
-  attestations: AttestationInput[]
-): StatisticalIssue[] {
-  const issues: StatisticalIssue[] = [];
-  for (const att of attestations) {
-    const origin = checkOrigin(att);
-    if (origin) issues.push(origin);
-
-    const labour = checkLabourHours(att);
-    if (labour) issues.push(labour);
-
-    const cost = checkCost(att);
-    if (cost) issues.push(cost);
-  }
-  return issues;
-}
-
 // -------------------------------------------------------------------------
 // Individual checks
 // -------------------------------------------------------------------------
@@ -182,7 +188,7 @@ function checkLabourHours(att: AttestationInput): StatisticalIssue | null {
 
   const [mean, std] = stats.labour_hours;
   const z = (h - mean) / std;
-  if (z <= Z_THRESHOLD) return null;
+  if (z <= Z_THRESHOLD_LABOUR_HOURS) return null;
 
   return {
     type: "statistical_anomaly",
@@ -215,7 +221,7 @@ function checkCost(att: AttestationInput): StatisticalIssue | null {
   if (stats.labour_cost_cad) {
     const [mean, std] = stats.labour_cost_cad;
     const z = (c - mean) / std;
-    if (z > Z_THRESHOLD) {
+    if (z > Z_THRESHOLD_LABOUR_COST) {
       flags.push(
         `labourCost=${c.toFixed(2)} is ${z.toFixed(1)}σ above mean ` +
         `(mean=${mean.toFixed(0)}, stdev=${std.toFixed(0)})`
@@ -228,7 +234,7 @@ function checkCost(att: AttestationInput): StatisticalIssue | null {
     const rate = c / h;
     const [mean, std] = stats.implied_rate;
     const z = (rate - mean) / std;
-    if (Math.abs(z) > Z_THRESHOLD) {
+    if (Math.abs(z) > Z_THRESHOLD_IMPLIED_RATE) {
       const direction = z > 0 ? "above" : "below";
       flags.push(
         `implied rate=${rate.toFixed(1)} CAD/hr is ${Math.abs(z).toFixed(1)}σ ${direction} mean ` +
@@ -247,4 +253,105 @@ function checkCost(att: AttestationInput): StatisticalIssue | null {
       `Costs are outside the normal range for this action type.`,
     confidence: "medium",
   };
+}
+
+// -------------------------------------------------------------------------
+// Check 4: timing_outlier (HIGH confidence)
+// A non-raw-material attestation has a parent-child timestamp gap below 24 hours.
+// In clean chains, the minimum gap is always >= 24h. Perturbed timing outliers
+// have suspiciously short gaps (as low as 8h).
+// -------------------------------------------------------------------------
+
+/**
+ * Check for timing outliers: attestations with suspiciously short parent-child gaps.
+ * Only flags non-raw-material attestations (raw materials have no parents).
+ */
+function checkTiming(
+  att: OfficialAttestationLike,
+  attMap: Map<string, OfficialAttestationLike>
+): StatisticalIssue | null {
+  if (att.parents.length === 0) return null;
+
+  let minGap = Infinity;
+  for (const parentRef of att.parents) {
+    const parentAtt = attMap.get(parentRef.attestation_id);
+    if (!parentAtt) continue;
+
+    const childTs = new Date(att.timestamp).getTime();
+    const parentTs = new Date(parentAtt.timestamp).getTime();
+    const gapHours = (childTs - parentTs) / (1000 * 60 * 60);
+
+    // Only consider positive gaps (negative = timestamp inversion, handled elsewhere)
+    if (gapHours > 0 && gapHours < minGap) {
+      minGap = gapHours;
+    }
+  }
+
+  if (minGap < MIN_GAP_HOURS) {
+    return {
+      type: "statistical_anomaly",
+      attestationId: att.attestation_id,
+      details:
+        `timing_outlier: minimum parent-child gap is ${minGap.toFixed(1)} hours, ` +
+        `which is below the expected minimum of ${MIN_GAP_HOURS} hours. ` +
+        `This suggests an implausibly fast production timeline.`,
+      confidence: "high",
+    };
+  }
+
+  return null;
+}
+
+// -------------------------------------------------------------------------
+// Public API
+// -------------------------------------------------------------------------
+
+/**
+ * Run all statistical checks over a list of attestations.
+ */
+export function checkStatisticalAnomalies(
+  attestations: AttestationInput[]
+): StatisticalIssue[] {
+  const issues: StatisticalIssue[] = [];
+  for (const att of attestations) {
+    const origin = checkOrigin(att);
+    if (origin) issues.push(origin);
+
+    const labour = checkLabourHours(att);
+    if (labour) issues.push(labour);
+
+    const cost = checkCost(att);
+    if (cost) issues.push(cost);
+  }
+  return issues;
+}
+
+/**
+ * Adapter for the verifier pipeline.
+ * Takes OfficialAttestation[] and returns Anomaly[] compatible with the verify orchestrator.
+ * Includes timing check which needs the full attestation objects (not just the adapted ones).
+ */
+export function checkStatistical(
+  attestations: OfficialAttestationLike[]
+): { type: string; attestation_id: string; details: string }[] {
+  // Run z-score checks (origin, labour, cost)
+  const adapted = attestations.map(adaptAttestation);
+  const issues = checkStatisticalAnomalies(adapted);
+
+  // Run timing check (needs full attestation objects with timestamps and parents)
+  const attMap = new Map<string, OfficialAttestationLike>();
+  for (const att of attestations) {
+    attMap.set(att.attestation_id, att);
+  }
+
+  for (const att of attestations) {
+    const timing = checkTiming(att, attMap);
+    if (timing) issues.push(timing);
+  }
+
+  return issues.map((issue) => ({
+    type: issue.type,
+    attestation_id: issue.attestationId,
+    details: issue.details,
+  }));
 }

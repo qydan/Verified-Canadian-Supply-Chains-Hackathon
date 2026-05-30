@@ -8,6 +8,7 @@ import { checkUnits } from './checks/unit.js';
 import { checkTimestamps } from './checks/timestamp.js';
 import { checkAnchors } from './checks/anchor.js';
 import { checkDuplicateIds, checkCostAnomalies, checkTransformationPlausibility } from './checks/semantic.js';
+import { checkStatistical } from './checks/statistical.js';
 import { computeCanadianContent } from './compute/canadian-content.js';
 import { determineDesignation } from './compute/designation.js';
 
@@ -73,7 +74,10 @@ export function verifyChain(
   // 10. Check for transformation steps with no parents
   const transformationAnomalies = checkTransformationPlausibility(attestations);
 
-  // 11. Compute Canadian content percentage
+  // 11. Statistical anomaly detection (z-score based)
+  const statisticalAnomalies = checkStatistical(attestations);
+
+  // 12. Compute Canadian content percentage
   const percentage = computeCanadianContent(attestations);
 
   // 9. Determine designation
@@ -95,6 +99,7 @@ export function verifyChain(
     ...duplicateAnomalies,
     ...costAnomalies,
     ...transformationAnomalies,
+    ...statisticalAnomalies,
   ];
 
   // 15. Build response
