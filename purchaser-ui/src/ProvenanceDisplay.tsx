@@ -499,6 +499,21 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                         </div>
                       )}
                     </div>
+                    {/* Inputs consumed from upstream */}
+                    {att.inputs.length > 0 && (
+                      <div style={{ marginTop: '0.35rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.3rem' }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', marginBottom: '0.2rem', fontWeight: 600 }}>Consumes:</div>
+                        {att.inputs.map((input, iIdx) => {
+                          const sourceIdx = idToIndex.get(input.attestationId);
+                          const sourceAtt = sourceIdx !== undefined ? chain[sourceIdx] : null;
+                          return (
+                            <div key={iIdx} style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginBottom: '0.1rem' }}>
+                              ← <strong>{input.quantityUsed} {input.unit}</strong> from {sourceAtt ? sourceAtt.productName : input.attestationId.slice(0, 8) + '…'}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })}
