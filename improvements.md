@@ -2,49 +2,85 @@
 
 ## Completed
 
-- [x] Seed data with realistic multi-tier drone supply chains (6 chains, 18 suppliers, 11 countries)
-- [x] Modern UI redesign (CSS design system, Inter font, gradients, cards, animations)
-- [x] Supply chain world map visualization with click-to-inspect popups
-- [x] Cost breakdown pie chart by country (recharts)
-- [x] Designation threshold gauge (51% / 98% visual markers)
-- [x] Chain of custody timeline (chronological view)
-- [x] Attestation search (by product name, country, supplier)
-- [x] PDF/print export with professional report layout
-- [x] Verified supplier badges on chain nodes
-- [x] QR code generation (supplier UI after submission + purchaser report)
-- [x] QR code scanning (camera-based, purchaser UI)
-- [x] Supplier registration with persistent Ed25519 keypair
-- [x] Submission history with copy-to-clipboard
+### Core System
+- [x] Ed25519 signature verification on all attestations
+- [x] SHA-256 content hashing for tamper detection
+- [x] DAG traversal (BFS) with topological sort
+- [x] Canadian content percentage calculation per Competition Bureau rules
+- [x] Designation computation (Product of Canada / Made in Canada / None)
+- [x] 5 anomaly detection categories (integrity, replay, quantity, structural, completeness)
+- [x] 226 backend tests passing (including property-based testing with fast-check)
+
+### Supplier Portal
+- [x] Supplier registration with Ed25519 keypair generation
+- [x] Sign-in flow for existing suppliers (with or without secret key)
+- [x] Secret key shown once at registration (save-it-now UX)
+- [x] Sign-in required to submit attestations
+- [x] Attestation submission with client-side signing
+- [x] Supplier dashboard (server-backed, shows all attestations across products)
+- [x] Stats cards (attestation count, products, transformations, total value)
 - [x] Form data persistence across tab switches
 - [x] Form reset after successful submission
+- [x] UUID validation on Product ID and input reference attestation IDs
+- [x] QR code generation after submission
+
+### Purchaser Portal
+- [x] QR code scanning (camera-based)
+- [x] Manual product ID lookup
+- [x] Attestation search (by product name, country, supplier)
+- [x] Provenance report with:
+  - [x] Designation banner (color-coded)
+  - [x] Canadian content percentage
+  - [x] Threshold gauge (51% / 98% markers with current position)
+  - [x] Cost breakdown progress bar (Canadian vs non-Canadian)
+  - [x] Cost by country pie chart (recharts)
+  - [x] Product info with QR code
+  - [x] Interactive world map with click-to-inspect popups
+  - [x] Chain of custody timeline (chronological)
+  - [x] DAG-style supply chain visualization (layered, flow-diagram layout)
+  - [x] Per-node: output quantity, cost, consumption progress bar
+  - [x] Cost per tier summary
+  - [x] Anomaly/integrity issue alerts
+  - [x] Verified supplier badges
+- [x] PDF/print export with professional report layout
 - [x] Country flags via flag-icons CSS library (Windows compatible)
-- [x] Mobile-responsive design
-- [x] Fix: React StrictMode fetch race condition (fetchId pattern)
-- [x] Fix: QR scanner double image
-- [x] Fix: Signature mismatch (currency field alignment)
-- [x] Fix: Makefile stop/reset commands
 
-## Potential Further Improvements
+### Seed Data & Demo
+- [x] 6 clean drone supply chains (52 attestations, 18 suppliers, 11 countries)
+- [x] 2 anomaly chains (replay attack + quantity exceeded)
+- [x] Chains span: CA, US, CN, DE, JP, KR, GB, IL, FR, IN, TW
+- [x] Products: ISR drone, cargo drone, consumer drone, defence VTOL, agri sprayer, maritime patrol
 
-### High Impact
-- [ ] Anomaly demo chain — seed a 7th chain that intentionally triggers replay/quantity anomalies
-- [ ] Supplier dashboard — view all attestations by a specific supplier across products
-- [ ] Chain completeness indicator — show if all input references are resolved
-- [ ] NATO/Five Eyes country highlighting on the map
-- [ ] Real-time anomaly toast notifications after submission
+### DevOps & DX
+- [x] Docker Compose deployment
+- [x] Makefile commands: dev, seed, test, stop, reset, build, docker
+- [x] Modern CSS design system (Inter font, custom properties, responsive)
+- [x] React StrictMode compatibility (no double-fetch bugs)
 
-### Medium Impact
+## Remaining / Future Improvements
+
+### High Priority (if time permits during hackathon)
+- [ ] Attestation detail modal — click a chain node to see full crypto details (signature, hash, timestamp)
+- [ ] Shareable report URLs — deep link to `/report/:productId` so reports can be bookmarked/shared
+- [ ] Chain completeness indicator — show if all input references are resolved vs. partial chain
+- [ ] Better error messages — map backend error codes to human-friendly explanations in the UI
+
+### Medium Priority
+- [ ] NATO/Five Eyes country highlighting on the map (defence context)
+- [ ] Supplier verification tiers (Registered → Verified → Trusted) — visual only
 - [ ] Dark mode toggle
 - [ ] Staggered chain node animations (appear one by one)
-- [ ] Shareable report URLs (deep link to product ID)
-- [ ] Attestation detail modal (click a chain node to see full details)
-- [ ] Supplier activity log / audit trail
-- [ ] Batch attestation import (CSV/JSON upload)
+- [ ] Batch attestation import (CSV/JSON upload for bulk data entry)
+- [ ] Supplier activity log / audit trail with timestamps
 
-### Polish
+### Polish & Production Readiness
 - [ ] Skeleton loaders instead of spinners
-- [ ] Better mobile QR scanner (full viewport)
-- [ ] Keyboard shortcuts (Ctrl+P for export, etc.)
-- [ ] Accessibility audit (ARIA labels, focus management)
+- [ ] Better mobile layout for the map
+- [ ] Keyboard shortcuts (Ctrl+P for export)
+- [ ] Accessibility audit (ARIA labels, focus management, screen reader testing)
 - [ ] Performance: code-split recharts and react-simple-maps (lazy load)
 - [ ] E2E tests with Playwright
+- [ ] PostgreSQL migration path (for production scalability)
+- [ ] Hardware security module (HSM) integration for key storage
+- [ ] Key rotation / revocation mechanism
+- [ ] Rate limiting and authentication on API endpoints

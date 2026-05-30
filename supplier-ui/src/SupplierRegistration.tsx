@@ -34,6 +34,7 @@ export function SupplierRegistration() {
   const [secretKeyHex, setSecretKeyHex] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<RegisteredSupplier | null>(null);
+  const [justRegisteredKey, setJustRegisteredKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const stored = (() => {
@@ -73,6 +74,7 @@ export function SupplierRegistration() {
           id: body.id, name: body.name, publicKey: pubKeyHex, secretKey: secKeyHex, location: body.location,
         }));
         setResult({ id: body.id, name: body.name, publicKey: pubKeyHex, location: body.location });
+        setJustRegisteredKey(secKeyHex);
       } else {
         const body = await response.json().catch(() => null);
         setError(body?.error || `Server error (${response.status})`);
@@ -137,6 +139,44 @@ export function SupplierRegistration() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // Just registered — show secret key prominently
+  if (justRegisteredKey && result) {
+    return (
+      <div>
+        <h2>Registration Complete</h2>
+        <div className="alert alert-success">
+          <span className="alert-icon">✓</span>
+          <div className="alert-content">
+            <div className="alert-title">Welcome, {result.name}!</div>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+              <div><strong>Supplier ID:</strong> <code>{result.id}</code></div>
+              <div><strong>Public Key:</strong> <code style={{ wordBreak: 'break-all' }}>{result.publicKey}</code></div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1rem', background: '#fffbeb', borderRadius: 'var(--radius-md)', border: '1px solid #fde68a', marginBottom: '1.5rem' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#92400e', marginBottom: '0.5rem' }}>
+            ⚠ Save your Secret Key — it will not be shown again
+          </div>
+          <code style={{ display: 'block', wordBreak: 'break-all', fontSize: '0.72rem', padding: '0.75rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', userSelect: 'all' }}>
+            {justRegisteredKey}
+          </code>
+          <p style={{ margin: '0.5rem 0 0', fontSize: '0.75rem', color: '#92400e' }}>
+            You need this key to sign in on another device or if you clear your browser data. Store it securely — anyone with this key can sign attestations as you.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setJustRegisteredKey(null)}
+          className="btn btn-primary btn-full"
+        >
+          I've saved my key — Continue
+        </button>
+      </div>
+    );
   }
 
   // Already registered view
@@ -280,21 +320,6 @@ export function SupplierRegistration() {
           <span className="alert-icon">✓</span>
           <div className="alert-content">
             <div className="alert-title">Registration successful!</div>
-            <div style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-              <div><strong>Supplier ID:</strong> <code>{result.id}</code></div>
-              <div><strong>Public Key:</strong> <code style={{ wordBreak: 'break-all' }}>{result.publicKey}</code></div>
-            </div>
-            <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#fffbeb', borderRadius: 'var(--radius-sm)', border: '1px solid #fde68a' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#92400e', marginBottom: '0.4rem' }}>
-                ⚠ Save your Secret Key now — it will not be shown again
-              </div>
-              <code style={{ display: 'block', wordBreak: 'break-all', fontSize: '0.7rem', padding: '0.5rem', background: '#fff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}>
-                {(() => { try { const s = JSON.parse(localStorage.getItem('supplier') || '{}'); return s.secretKey || ''; } catch { return ''; } })()}
-              </code>
-              <p style={{ margin: '0.4rem 0 0', fontSize: '0.7rem', color: '#92400e' }}>
-                You need this key to sign in on another device. Store it securely.
-              </p>
-            </div>
           </div>
         </div>
       )}
