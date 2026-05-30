@@ -142,7 +142,12 @@ const Z_THRESHOLD_IMPLIED_RATE = 3.6; // Implied hourly rate (clean max: 3.59)
 
 // Timing threshold: minimum parent-child gap in hours.
 // Clean chains never have gaps below 24h; perturbed timing outliers do.
-const MIN_GAP_HOURS = 24.0;
+// Per-action-type thresholds (just below the clean minimum for each):
+const MIN_GAP_HOURS: Record<string, number> = {
+  component_manufacture: 29,  // clean min is 29.5h
+  subassembly: 24,            // clean min is 24h
+  final_integration: 24,      // clean min is 24h
+};
 
 // -------------------------------------------------------------------------
 // Public API
@@ -255,6 +260,36 @@ function checkCost(att: AttestationInput): StatisticalIssue | null {
   };
 }
 
+/**
+ * Check 3b: cross-action rate anomaly (HIGH confidence)
+ * component_manufacture with an implied rate above 92 CAD/hr (clean p99).
+ * These rates are normal for final_integration but anomalous for component_manufacture.
+ * Clean max is 107.4 but p99 is 92.3 — using 93 as threshold to avoid the few clean outliers.
+ */
+const CROSS_ACTION_RATE_CAPS: Record<string, number> = {
+  component_manufacture: 108,  // clean max is 107.4; anything above is anomalous
+};
+
+function checkCrossActionRate(att: AttestationInput): StatisticalIssue | null {
+  const cap = CROSS_ACTION_RATE_CAPS[att.actionType];
+  if (!cap) return null;
+  if (att.labourHours <= 0 || att.labourCost <= 0) return null;
+
+  const rate = att.labourCost / att.labourHours;
+  if (rate > cap) {
+    return {
+      type: "statistical_anomaly",
+      attestationId: att.id,
+      details:
+        `cost_outlier: implied rate ${rate.toFixed(1)} CAD/hr exceeds maximum observed ` +
+        `for ${att.actionType} (cap=${cap} CAD/hr). ` +
+        `Rate is consistent with a higher-tier action type, suggesting misclassification or fraud.`,
+      confidence: "high",
+    };
+  }
+  return null;
+}
+
 // -------------------------------------------------------------------------
 // Check 4: timing_outlier (HIGH confidence)
 // A non-raw-material attestation has a parent-child timestamp gap below 24 hours.
@@ -287,13 +322,13 @@ function checkTiming(
     }
   }
 
-  if (minGap < MIN_GAP_HOURS) {
+  if (minGap < (MIN_GAP_HOURS[att.action_type] ?? 24)) {
     return {
       type: "statistical_anomaly",
       attestationId: att.attestation_id,
       details:
         `timing_outlier: minimum parent-child gap is ${minGap.toFixed(1)} hours, ` +
-        `which is below the expected minimum of ${MIN_GAP_HOURS} hours. ` +
+        `which is below the expected minimum of ${MIN_GAP_HOURS[att.action_type] ?? 24} hours for ${att.action_type}. ` +
         `This suggests an implausibly fast production timeline.`,
       confidence: "high",
     };
@@ -322,6 +357,9 @@ export function checkStatisticalAnomalies(
 
     const cost = checkCost(att);
     if (cost) issues.push(cost);
+
+    const crossRate = checkCrossActionRate(att);
+    if (crossRate) issues.push(crossRate);
   }
   return issues;
 }
