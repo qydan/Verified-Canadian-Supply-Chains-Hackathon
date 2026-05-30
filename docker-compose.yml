@@ -40,6 +40,21 @@ services:
     networks:
       - provenance-net
 
+  verifier:
+    build:
+      context: ./verifier
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8000/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - provenance-net
+
 volumes:
   backend-data:
 

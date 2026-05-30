@@ -1,0 +1,10 @@
+node_modules
+dist
+*.test.ts
+*.prop.ts
+vitest.config.ts
+.git
+.gitignore
+__tests__
+src/**/*.test.ts
+src/**/*.prop.ts
