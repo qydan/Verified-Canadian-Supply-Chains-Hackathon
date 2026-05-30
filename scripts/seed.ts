@@ -63,6 +63,7 @@ const suppliers: SupplierDef[] = [
   { name: 'BC Precision Machining', location: 'CA', keyPair: nacl.sign.keyPair() },
   { name: 'Québec Optics Lab', location: 'CA', keyPair: nacl.sign.keyPair() },
   { name: 'Nova Scotia Wiring', location: 'CA', keyPair: nacl.sign.keyPair() },
+  { name: 'Manitoba Rubber & Seals', location: 'CA', keyPair: nacl.sign.keyPair() },
   // United States
   { name: 'Texas Semiconductor Inc', location: 'US', keyPair: nacl.sign.keyPair() },
   { name: 'California Propulsion', location: 'US', keyPair: nacl.sign.keyPair() },
@@ -85,6 +86,14 @@ const suppliers: SupplierDef[] = [
   { name: 'Bangalore Software Labs', location: 'IN', keyPair: nacl.sign.keyPair() },
   // Taiwan
   { name: 'Taipei Chip Foundry', location: 'TW', keyPair: nacl.sign.keyPair() },
+  // Mexico
+  { name: 'Monterrey Metals SA', location: 'MX', keyPair: nacl.sign.keyPair() },
+  // Brazil
+  { name: 'São Paulo Composites', location: 'BR', keyPair: nacl.sign.keyPair() },
+  // Australia
+  { name: 'Sydney Mining Tech', location: 'AU', keyPair: nacl.sign.keyPair() },
+  // Italy
+  { name: 'Milano Precision Optics', location: 'IT', keyPair: nacl.sign.keyPair() },
 ];
 
 // ============================================================================
@@ -164,7 +173,7 @@ async function main() {
   console.log('');
 
   const [
-    mapleDrone, prairieCarbon, ottawaAvionics, bcPrecision, quebecOptics, novaScotiaWiring,
+    mapleDrone, prairieCarbon, ottawaAvionics, bcPrecision, quebecOptics, novaScotiaWiring, manitobaRubber,
     texasSemi, calPropulsion,
     shenzhenMicro, dongguanBattery,
     stuttgartMotors,
@@ -175,9 +184,13 @@ async function main() {
     toulouseAero,
     bangaloreSoftware,
     taipeiChip,
+    monterreyMetals,
+    saoPauloComposites,
+    sydneyMining,
+    milanoOptics,
   ] = suppliers;
   const [
-    mapleDroneId, prairieCarbonId, ottawaAvionicsId, bcPrecisionId, quebecOpticsId, novaScotiaWiringId,
+    mapleDroneId, prairieCarbonId, ottawaAvionicsId, bcPrecisionId, quebecOpticsId, novaScotiaWiringId, manitobaRubberId,
     texasSemiId, calPropulsionId,
     shenzhenMicroId, dongguanBatteryId,
     stuttgartMotorsId,
@@ -188,6 +201,10 @@ async function main() {
     toulouseAeroId,
     bangaloreSoftwareId,
     taipeiChipId,
+    monterreyMetalsId,
+    saoPauloCompositesId,
+    sydneyMiningId,
+    milanoOpticsId,
   ] = ids;
 
   // Product IDs
@@ -197,6 +214,8 @@ async function main() {
   const defenceDroneId   = 'd4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f80'; // Made in Canada (complex)
   const agriDroneId      = 'e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8091'; // Product of Canada
   const maritimeDroneId  = 'f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f809102'; // Made in Canada
+  const armVehicleId     = '01234567-89ab-4cde-f012-3456789abcde'; // Made in Canada (non-drone, 15+ steps)
+  const singleStepId     = '11112222-3333-4444-5555-666677778888'; // Product of Canada (single step edge case)
 
   // =========================================================================
   // Chain 1: "Product of Canada" — Reconnaissance Drone (10 steps, all CA)
@@ -448,10 +467,88 @@ async function main() {
   console.log('');
 
   // =========================================================================
-  // Chain 7: ANOMALY — Replay Attack (same component claimed by two products)
+  // Chain 7: "Made in Canada" — Armoured Vehicle (15 steps, 7 countries)
+  // Non-drone product to show system generality. Deep chain.
+  // =========================================================================
+  console.log('🚗 Chain 7: Made in Canada — Armoured Vehicle (15 steps, CA/US/DE/MX/BR/AU/IT)');
+
+  const auSteel = await submit(sydneyMining, sydneyMiningId,
+    p('High-Strength Steel Plate', armVehicleId, sydneyMiningId, 'AU', 500, 200, 50, 'tonnes', daysAgo(60), false));
+
+  const mxAluminum = await submit(monterreyMetals, monterreyMetalsId,
+    p('Aluminum Alloy Ingots', armVehicleId, monterreyMetalsId, 'MX', 300, 100, 30, 'tonnes', daysAgo(58), false));
+
+  const brRubber = await submit(saoPauloComposites, saoPauloCompositesId,
+    p('Ballistic Rubber Compound', armVehicleId, saoPauloCompositesId, 'BR', 200, 80, 20, 'tonnes', daysAgo(56), true));
+
+  const itGlass = await submit(milanoOptics, milanoOpticsId,
+    p('Ballistic Glass Panels', armVehicleId, milanoOpticsId, 'IT', 400, 250, 40, 'units', daysAgo(54), true));
+
+  const deEngine = await submit(stuttgartMotors, stuttgartMotorsId,
+    p('Diesel Powerpack Engine', armVehicleId, stuttgartMotorsId, 'DE', 2000, 1200, 10, 'units', daysAgo(52), true));
+
+  const usComms2 = await submit(texasSemi, texasSemiId,
+    p('Tactical Radio System', armVehicleId, texasSemiId, 'US', 600, 300, 20, 'units', daysAgo(50), true));
+
+  const caHull = await submit(prairieCarbon, prairieCarbonId,
+    p('Armoured Hull Assembly', armVehicleId, prairieCarbonId, 'CA', 800, 1500, 5, 'units', daysAgo(45), true,
+      [{ attestationId: auSteel.id, quantityUsed: 20, unit: 'tonnes' },
+       { attestationId: mxAluminum.id, quantityUsed: 10, unit: 'tonnes' }]));
+
+  const caArmour = await submit(manitobaRubber, manitobaRubberId,
+    p('Composite Armour Panels', armVehicleId, manitobaRubberId, 'CA', 400, 600, 8, 'units', daysAgo(42), true,
+      [{ attestationId: brRubber.id, quantityUsed: 5, unit: 'tonnes' }]));
+
+  const caTurret = await submit(bcPrecision, bcPrecisionId,
+    p('Remote Weapon Station', armVehicleId, bcPrecisionId, 'CA', 1200, 800, 5, 'units', daysAgo(40), true));
+
+  const caSuspension = await submit(bcPrecision, bcPrecisionId,
+    p('Independent Suspension System', armVehicleId, bcPrecisionId, 'CA', 500, 400, 5, 'units', daysAgo(38), true));
+
+  const caElectronics = await submit(ottawaAvionics, ottawaAvionicsId,
+    p('Vehicle Electronics Suite', armVehicleId, ottawaAvionicsId, 'CA', 300, 500, 5, 'units', daysAgo(35), true,
+      [{ attestationId: usComms2.id, quantityUsed: 5, unit: 'units' }]));
+
+  const caDrivetrain = await submit(bcPrecision, bcPrecisionId,
+    p('Drivetrain & Transmission', armVehicleId, bcPrecisionId, 'CA', 400, 600, 5, 'units', daysAgo(32), true,
+      [{ attestationId: deEngine.id, quantityUsed: 5, unit: 'units' }]));
+
+  const caInterior = await submit(manitobaRubber, manitobaRubberId,
+    p('Crew Compartment Interior', armVehicleId, manitobaRubberId, 'CA', 200, 300, 5, 'units', daysAgo(28), true));
+
+  const caProtection = await submit(quebecOptics, quebecOpticsId,
+    p('Active Protection System', armVehicleId, quebecOpticsId, 'CA', 800, 600, 5, 'units', daysAgo(25), true,
+      [{ attestationId: itGlass.id, quantityUsed: 20, unit: 'units' }]));
+
+  await submit(mapleDrone, mapleDroneId,
+    p('Maple Shield LAV', armVehicleId, mapleDroneId, 'CA', 200, 2000, 1, 'units', daysAgo(15), true,
+      [{ attestationId: caHull.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caArmour.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caTurret.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caSuspension.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caElectronics.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caDrivetrain.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caInterior.id, quantityUsed: 1, unit: 'units' },
+       { attestationId: caProtection.id, quantityUsed: 1, unit: 'units' }]));
+
+  console.log('');
+
+  // =========================================================================
+  // Chain 8: "Product of Canada" — Single Step (edge case: 1 attestation)
+  // Tests that the system handles a product with no inputs
+  // =========================================================================
+  console.log('🧪 Chain 8: Product of Canada — Single Step (edge case)');
+
+  await submit(prairieCarbon, prairieCarbonId,
+    p('Raw Carbon Fiber Roll', singleStepId, prairieCarbonId, 'CA', 500, 300, 100, 'kg', daysAgo(5), false));
+
+  console.log('');
+
+  // =========================================================================
+  // Chain 9: ANOMALY — Replay Attack (same component claimed by two products)
   // Triggers REPLAY_DETECTED when the same input is used across products
   // =========================================================================
-  console.log('⚠️  Chain 7: ANOMALY — Replay Attack (component double-counted)');
+  console.log('⚠️  Chain 9: ANOMALY — Replay Attack (component double-counted)');
 
   const replayDroneId = '17a8b9c0-d1e2-4f3a-4b5c-6d7e8f901234';
   const replayDrone2Id = '27b9c0d1-e2f3-4a4b-5c6d-000000000000';
@@ -481,10 +578,10 @@ async function main() {
   console.log('');
 
   // =========================================================================
-  // Chain 8: ANOMALY — Quantity Exceeded (claims more material than produced)
+  // Chain 10: ANOMALY — Quantity Exceeded (claims more material than produced)
   // Triggers QUANTITY_EXCEEDS_UPSTREAM
   // =========================================================================
-  console.log('⚠️  Chain 8: ANOMALY — Quantity Exceeded (over-claiming materials)');
+  console.log('⚠️  Chain 10: ANOMALY — Quantity Exceeded (over-claiming materials)');
 
   const quantityDroneId = '28b9c0d1-e2f3-4a4b-5c6d-7e8f90123456';
 
@@ -500,6 +597,20 @@ async function main() {
   console.log('');
 
   // =========================================================================
+  // Chain 11: ANOMALY — Broken Link (references non-existent attestation)
+  // Triggers BROKEN_LINK
+  // =========================================================================
+  console.log('⚠️  Chain 11: ANOMALY — Broken Link (missing reference)');
+
+  const brokenLinkId = '38c0d1e2-f3a4-4b5c-6d7e-8f9012345678';
+
+  await submit(mapleDrone, mapleDroneId,
+    p('Ghost Reference Drone', brokenLinkId, mapleDroneId, 'CA', 100, 200, 1, 'units', daysAgo(3), true,
+      [{ attestationId: '00000000-0000-0000-0000-000000000000', quantityUsed: 5, unit: 'units' }]));
+
+  console.log('');
+
+  // =========================================================================
   // Done
   // =========================================================================
   console.log('✅ Seed complete!\n');
@@ -510,10 +621,13 @@ async function main() {
   console.log(`  🛡️  Made in Canada — Defence VTOL (12):       ${defenceDroneId}`);
   console.log(`  🌾 Product of Canada — Agri Drone (6):       ${agriDroneId}`);
   console.log(`  🚢 Made in Canada — Maritime Drone (9):      ${maritimeDroneId}`);
-  console.log(`  ⚠️  ANOMALY — Replay Attack:                  ${replayDroneId} and ${replayDrone2Id}`);
+  console.log(`  🚗 Made in Canada — Armoured Vehicle (15):   ${armVehicleId}`);
+  console.log(`  🧪 Product of Canada — Single Step (1):      ${singleStepId}`);
+  console.log(`  ⚠️  ANOMALY — Replay Attack:                  ${replayDroneId} & ${replayDrone2Id}`);
   console.log(`  ⚠️  ANOMALY — Quantity Exceeded:              ${quantityDroneId}`);
+  console.log(`  ⚠️  ANOMALY — Broken Link:                    ${brokenLinkId}`);
   console.log('');
-  console.log('Countries represented: CA, US, CN, DE, JP, KR, GB, IL, FR, IN, TW');
+  console.log('Countries: CA, US, CN, DE, JP, KR, GB, IL, FR, IN, TW, MX, BR, AU, IT');
   console.log('Paste any product ID into the Purchaser UI to see the provenance report.');
 }
 
