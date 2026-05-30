@@ -7,6 +7,7 @@ import { checkMassBalance } from './checks/mass-balance.js';
 import { checkUnits } from './checks/unit.js';
 import { checkTimestamps } from './checks/timestamp.js';
 import { checkAnchors } from './checks/anchor.js';
+import { checkDuplicateIds, checkCostAnomalies, checkTransformationPlausibility } from './checks/semantic.js';
 import { computeCanadianContent } from './compute/canadian-content.js';
 import { determineDesignation } from './compute/designation.js';
 
@@ -63,7 +64,16 @@ export function verifyChain(
     product_attestation_id
   );
 
-  // 8. Compute Canadian content percentage
+  // 8. Check for duplicate attestation_ids (replay within chain)
+  const duplicateAnomalies = checkDuplicateIds(attestations);
+
+  // 9. Check for implausible labour rates
+  const costAnomalies = checkCostAnomalies(attestations);
+
+  // 10. Check for transformation steps with no parents
+  const transformationAnomalies = checkTransformationPlausibility(attestations);
+
+  // 11. Compute Canadian content percentage
   const percentage = computeCanadianContent(attestations);
 
   // 9. Determine designation
@@ -73,7 +83,7 @@ export function verifyChain(
     percentage
   );
 
-  // 10. Aggregate all anomalies
+  // 14. Aggregate all anomalies
   const anomalies: Anomaly[] = [
     ...structuralAnomalies,
     ...signatureAnomalies,
@@ -82,9 +92,12 @@ export function verifyChain(
     ...unitAnomalies,
     ...timestampAnomalies,
     ...anchorAnomalies,
+    ...duplicateAnomalies,
+    ...costAnomalies,
+    ...transformationAnomalies,
   ];
 
-  // 11. Build response
+  // 15. Build response
   return {
     product_attestation_id,
     canadian_content_percentage: percentage,

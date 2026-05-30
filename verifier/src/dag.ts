@@ -84,65 +84,87 @@ export function buildDag(
 }
 
 /**
- * Detect cycles using iterative DFS with coloring.
- * Colors: WHITE (0) = unvisited, GRAY (1) = in current path, BLACK (2) = fully processed
+ * Detect cycles using Tarjan's SCC algorithm (iterative).
+ * Only nodes in strongly connected components of size > 1 are true cycle members.
  *
  * Returns the set of attestation_ids that are part of cycles.
  */
 function detectCycles(nodes: Map<string, DagNode>): Set<string> {
-  const WHITE = 0;
-  const GRAY = 1;
-  const BLACK = 2;
-
-  const color = new Map<string, number>();
-  for (const id of nodes.keys()) {
-    color.set(id, WHITE);
-  }
-
   const cycleNodes = new Set<string>();
 
+  let index = 0;
+  const nodeIndex = new Map<string, number>();
+  const nodeLowlink = new Map<string, number>();
+  const onStack = new Set<string>();
+  const sccStack: string[] = [];
+
+  // Iterative Tarjan's using an explicit call stack
+  // Each frame: [nodeId, parentIdx, isReturning]
+  type Frame = { id: string; parentIdx: number };
+
   for (const startId of nodes.keys()) {
-    if (color.get(startId) !== WHITE) continue;
+    if (nodeIndex.has(startId)) continue;
 
-    // Iterative DFS using an explicit stack
-    // Stack entries: [nodeId, parentIndex] where parentIndex tracks which parent we're exploring next
-    const stack: Array<[string, number]> = [[startId, 0]];
-    color.set(startId, GRAY);
+    const callStack: Frame[] = [{ id: startId, parentIdx: 0 }];
+    nodeIndex.set(startId, index);
+    nodeLowlink.set(startId, index);
+    index++;
+    onStack.add(startId);
+    sccStack.push(startId);
 
-    while (stack.length > 0) {
-      const [currentId, parentIdx] = stack[stack.length - 1];
-      const currentNode = nodes.get(currentId)!;
+    while (callStack.length > 0) {
+      const frame = callStack[callStack.length - 1];
+      const currentNode = nodes.get(frame.id)!;
       const parents = currentNode.parents;
 
-      if (parentIdx < parents.length) {
-        // Advance the parent index for the current frame
-        stack[stack.length - 1] = [currentId, parentIdx + 1];
+      if (frame.parentIdx < parents.length) {
+        const parentId = parents[frame.parentIdx].attestation.attestation_id;
+        frame.parentIdx++;
 
-        const parentId = parents[parentIdx].attestation.attestation_id;
-        const parentColor = color.get(parentId)!;
+        if (!nodeIndex.has(parentId)) {
+          // Not yet visited — recurse
+          nodeIndex.set(parentId, index);
+          nodeLowlink.set(parentId, index);
+          index++;
+          onStack.add(parentId);
+          sccStack.push(parentId);
+          callStack.push({ id: parentId, parentIdx: 0 });
+        } else if (onStack.has(parentId)) {
+          // Back edge to node on stack — update lowlink
+          nodeLowlink.set(
+            frame.id,
+            Math.min(nodeLowlink.get(frame.id)!, nodeIndex.get(parentId)!)
+          );
+        }
+      } else {
+        // Done processing all parents — pop and propagate lowlink
+        callStack.pop();
 
-        if (parentColor === GRAY) {
-          // Back edge found — cycle detected
-          // Mark all nodes in the cycle (from the gray parent back to current position in stack)
-          let foundCycleStart = false;
-          for (const [stackId] of stack) {
-            if (stackId === parentId) {
-              foundCycleStart = true;
-            }
-            if (foundCycleStart) {
-              cycleNodes.add(stackId);
+        if (callStack.length > 0) {
+          const caller = callStack[callStack.length - 1];
+          nodeLowlink.set(
+            caller.id,
+            Math.min(nodeLowlink.get(caller.id)!, nodeLowlink.get(frame.id)!)
+          );
+        }
+
+        // If this is a root of an SCC, pop the SCC from the stack
+        if (nodeLowlink.get(frame.id) === nodeIndex.get(frame.id)) {
+          const scc: string[] = [];
+          let w: string;
+          do {
+            w = sccStack.pop()!;
+            onStack.delete(w);
+            scc.push(w);
+          } while (w !== frame.id);
+
+          // Only SCCs with more than 1 node represent cycles
+          if (scc.length > 1) {
+            for (const nodeId of scc) {
+              cycleNodes.add(nodeId);
             }
           }
-        } else if (parentColor === WHITE) {
-          // Explore this parent
-          color.set(parentId, GRAY);
-          stack.push([parentId, 0]);
         }
-        // BLACK nodes are already fully processed, skip
-      } else {
-        // All parents explored, mark as BLACK
-        stack.pop();
-        color.set(currentId, BLACK);
       }
     }
   }
