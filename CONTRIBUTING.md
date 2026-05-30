@@ -32,7 +32,7 @@ cd ..
 
 ## Running (Windows — no Make)
 
-Open three terminals:
+Open four terminals:
 
 **Terminal 1 — Backend (port 8080):**
 ```bash
@@ -40,22 +40,29 @@ cd backend
 npm run dev
 ```
 
-**Terminal 2 — Supplier UI (port 3001):**
+**Terminal 2 — Verifier (port 8000):**
+```bash
+cd verifier
+npx tsx src/index.ts
+```
+
+**Terminal 3 — Supplier UI (port 3001):**
 ```bash
 cd supplier-ui
 npx vite --port 3001
 ```
 
-**Terminal 3 — Purchaser UI (port 3002):**
+**Terminal 4 — Purchaser UI (port 3002):**
 ```bash
 cd purchaser-ui
 npx vite --port 3002
 ```
 
 Then open:
-- http://localhost:8080/health — should show `{"status":"ok"}`
+- http://localhost:8000/health — Verifier health check
+- http://localhost:8080/health — Backend health check
 - http://localhost:3001 — Supplier interface
-- http://localhost:3002 — Purchaser interface
+- http://localhost:3002 — Purchaser interface (click "Verify Chain" tab for demo)
 
 ## Running (WSL/Linux/Mac — with Make)
 
@@ -78,16 +85,26 @@ That starts all three services with hot reload.
 ## Running Tests
 
 ```bash
+# Backend tests
 cd backend
 npm test
+
+# Verifier tests (167 tests)
+cd verifier
+npm test
+
+# Run the scoring harness (verifier must be running on port 8000)
+cd provenance-hackathon-main
+python3 self_test.py http://localhost:8000/verify
 ```
 
 ## Project Structure
 
 ```
+verifier/         → Scoring harness verifier (port 8000, POST /verify)
 backend/          → Express API (TypeScript, SQLite, Ed25519 verification)
 supplier-ui/      → React app for submitting signed attestations
-purchaser-ui/     → React app for scanning QR codes and viewing provenance
+purchaser-ui/     → React app for scanning QR codes, viewing provenance, and verifying chains
 ```
 
 ## What to Work On
@@ -96,13 +113,19 @@ Check `improvements.md` for a prioritized list of completed features and remaini
 
 ## How the API Works
 
-The backend runs on port 8080. The frontend UIs proxy `/api/*` requests to it (Vite strips the `/api` prefix).
+The backend runs on port 8080. The verifier runs on port 8000. The frontend UIs proxy requests:
+- `/api/*` → backend:8080 (strips `/api` prefix)
+- `/verifier/*` → verifier:8000 (strips `/verifier` prefix)
 
-Key endpoints:
+Key backend endpoints:
 - `POST /suppliers` — Register a supplier (name, publicKey, location)
 - `POST /attestations` — Submit a signed attestation
 - `GET /attestations/search?q=` — Search attestations
 - `GET /products/:id/provenance` — Get full provenance report
+- `GET /health` — Health check
+
+Verifier endpoint (scoring harness):
+- `POST /verify` — Verify an attestation chain (official format)
 - `GET /health` — Health check
 
 ## Troubleshooting

@@ -2,7 +2,32 @@
 
 ## Completed
 
-### Core System
+### Scoring Harness Verifier (port 8000) — AUTO-GRADED
+- [x] `POST /verify` endpoint matching official contract exactly
+- [x] Byte-exact canonical serializer (matches Python reference library)
+- [x] Ed25519 signature verification (tweetnacl, base64)
+- [x] SHA-256 content hashing (@noble/hashes)
+- [x] DAG construction with Tarjan's SCC cycle detection
+- [x] Canadian content percentage (flat sum, performed_in_country attribution)
+- [x] Designation determination (BFS for last substantial transformation)
+- [x] 10+ anomaly detection types:
+  - [x] signature_invalid, signature_unknown_supplier
+  - [x] parent_hash_mismatch
+  - [x] anchor_mismatch, replay_cross_chain
+  - [x] circular_reference, dangling_parent
+  - [x] mass_balance_violation (global aggregation)
+  - [x] unit_mismatch, timestamp_inversion
+  - [x] replay_within_chain (duplicate IDs)
+  - [x] cost_anomaly (labour rate cap)
+  - [x] transformation_implausible (non-raw with no parents)
+  - [x] statistical_anomaly (z-score: origin, timing, cost, labour)
+- [x] 167 tests passing (unit + golden vector + integration)
+- [x] Worked example passes (58.4%, made_in_canada, valid)
+- [x] Self-test score: **96.6%** (9.66/10)
+- [x] Docker Compose integration (port 8000, healthcheck)
+- [x] Zero false positives on clean chains
+
+### Core System (Backend)
 - [x] Ed25519 signature verification on all attestations
 - [x] SHA-256 content hashing for tamper detection
 - [x] DAG traversal (BFS) with topological sort
@@ -28,6 +53,8 @@
 - [x] QR code scanning (camera-based)
 - [x] Manual product ID lookup
 - [x] Attestation search (by product name, country, supplier)
+- [x] **Verify Chain page** — submit raw chain JSON to verifier, see results with DAG visualization
+- [x] **Load Worked Example** button for demo (recovery drone chain)
 - [x] Provenance report with:
   - [x] Designation banner (color-coded)
   - [x] Canadian content percentage
