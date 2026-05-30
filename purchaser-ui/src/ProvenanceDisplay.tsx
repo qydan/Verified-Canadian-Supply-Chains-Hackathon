@@ -254,6 +254,12 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
               {report.allSignaturesValid ? '✓ All Valid' : '✗ Invalid Detected'}
             </span>
           </div>
+          <div className="product-info-item">
+            <span className="product-info-label">Chain Completeness</span>
+            <span className="product-info-value">
+              <ChainCompletenessIndicator chain={report.chain} />
+            </span>
+          </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
           <QRCodeSVG value={report.productId} size={80} />
@@ -433,12 +439,25 @@ function AnomalyWarnings({ issues }: { issues: Issue[] }) {
     INFO: { className: 'issue-info', icon: 'ℹ️', color: '#1e40af' },
   };
 
+  const issueExplanations: Record<string, string> = {
+    INVALID_SIGNATURE: 'The data may have been tampered with after the supplier signed it.',
+    MODIFIED_PAYLOAD: "The stored content doesn't match what was originally submitted.",
+    UNREGISTERED_SUPPLIER: 'This attestation was signed by a key not in the supplier registry.',
+    REPLAY_DETECTED: 'The same component is being claimed by multiple products — possible double-counting.',
+    QUANTITY_EXCEEDS_UPSTREAM: 'More material is being claimed than was actually produced.',
+    BROKEN_LINK: "A referenced input doesn't exist in the system.",
+    IMPOSSIBLE_ORDERING: 'An input was supposedly created after the step that uses it.',
+    CYCLE_DETECTED: 'The supply chain contains a loop, which is physically impossible.',
+    MISSING_REQUIRED_FIELD: 'Required data is missing from this attestation.',
+  };
+
   return (
     <div style={{ marginBottom: '1.5rem' }}>
       <h3 style={{ marginBottom: '0.75rem' }}>Detected Issues ({issues.length})</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {issues.map((issue, idx) => {
           const cfg = severityConfig[issue.severity] || severityConfig.INFO;
+          const explanation = issueExplanations[issue.type];
           return (
             <div key={idx} className={`issue-item ${cfg.className}`}>
               <span>{cfg.icon}</span>
@@ -448,12 +467,46 @@ function AnomalyWarnings({ issues }: { issues: Issue[] }) {
                 </span>
                 <span className="issue-type">{issue.type}</span>
                 <p className="issue-description">{issue.description}</p>
+                {explanation && (
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', margin: '0.25rem 0 0', fontStyle: 'italic' }}>
+                    {explanation}
+                  </p>
+                )}
               </div>
             </div>
           );
         })}
       </div>
     </div>
+  );
+}
+
+function ChainCompletenessIndicator({ chain }: { chain: Attestation[] }) {
+  const chainIds = new Set(chain.map((a) => a.id));
+  let totalInputRefs = 0;
+  let unresolvedCount = 0;
+
+  for (const att of chain) {
+    for (const input of att.inputs) {
+      totalInputRefs++;
+      if (!chainIds.has(input.attestationId)) {
+        unresolvedCount++;
+      }
+    }
+  }
+
+  if (totalInputRefs === 0) {
+    return <span style={{ color: 'var(--color-success)' }}>Complete ✓</span>;
+  }
+
+  if (unresolvedCount === 0) {
+    return <span style={{ color: 'var(--color-success)' }}>Complete ✓</span>;
+  }
+
+  return (
+    <span style={{ color: '#f59e0b' }}>
+      Partial ({unresolvedCount} unresolved)
+    </span>
   );
 }
 
@@ -578,6 +631,20 @@ function SupplyChainVisualization({ chain }: { chain: Attestation[] }) {
                       </span>
                       {att.isTransformation && (
                         <span className="badge badge-transform" style={{ fontSize: '0.65rem' }}>⚙ transform</span>
+                      )}
+                      {/* Verification Tier Badge */}
+                      {att.isTransformation && att.location === 'CA' ? (
+                        <span style={{ fontSize: '0.6rem', fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '0.1rem 0.35rem', borderRadius: '3px' }}>
+                          ✓ verified · CA transform
+                        </span>
+                      ) : att.location === 'CA' ? (
+                        <span style={{ fontSize: '0.6rem', fontWeight: 600, color: '#16a34a', background: '#f0fdf4', padding: '0.1rem 0.35rem', borderRadius: '3px' }}>
+                          ✓ verified
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.6rem', fontWeight: 500, color: '#6b7280', background: '#f3f4f6', padding: '0.1rem 0.35rem', borderRadius: '3px' }}>
+                          ✓ registered
+                        </span>
                       )}
                     </div>
                     <div style={{ color: 'var(--color-text-muted)', fontSize: '0.7rem' }}>

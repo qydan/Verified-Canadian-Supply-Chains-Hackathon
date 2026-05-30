@@ -1,22 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QRScanner } from './QRScanner';
 import { ProvenanceDisplay } from './ProvenanceDisplay';
 import { SearchPage } from './SearchPage';
 
 type Page = 'scan' | 'report' | 'search';
 
+const UUID_HASH_REGEX = /^#\/report\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('scan');
   const [scannedProductId, setScannedProductId] = useState<string | null>(null);
 
+  // On mount, check URL hash for a shareable report link
+  useEffect(() => {
+    const hash = window.location.hash;
+    const match = hash.match(UUID_HASH_REGEX);
+    if (match) {
+      setScannedProductId(match[1]);
+      setCurrentPage('report');
+    }
+  }, []);
+
   function handleProductScanned(productId: string) {
     setScannedProductId(productId);
     setCurrentPage('report');
+    window.location.hash = '#/report/' + productId;
   }
 
   function handleScanAgain() {
     setScannedProductId(null);
     setCurrentPage('scan');
+    window.location.hash = '';
   }
 
   return (
