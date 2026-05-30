@@ -193,6 +193,9 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
       {/* Designation Banner */}
       <DesignationBanner designation={report.designation} />
 
+      {/* Plain-English Summary & Risk Assessment */}
+      <ReportSummary report={report} />
+
       {/* Canadian Content Percentage */}
       <div className="stats-card" style={{ margin: '1.5rem 0' }}>
         <p className="stats-label">Canadian Content</p>
@@ -297,6 +300,104 @@ export function ProvenanceDisplay({ productId, onScanAgain }: ProvenanceDisplayP
 // ============================================================================
 // Sub-components
 // ============================================================================
+
+function ReportSummary({ report }: { report: ProvenanceReport }) {
+  const countries = [...new Set(report.chain.map((a) => a.location))];
+  const nonCACountries = countries.filter((c) => c !== 'CA');
+  const criticalIssues = report.issues.filter((i) => i.severity === 'CRITICAL');
+  const warningIssues = report.issues.filter((i) => i.severity === 'WARNING');
+
+  // Build plain-English summary
+  const designationText = {
+    PRODUCT_OF_CANADA: 'Product of Canada',
+    MADE_IN_CANADA: 'Made in Canada',
+    NONE: 'does not qualify for a Canadian designation',
+  }[report.designation];
+
+  // Risk assessment (rule-based, no LLM)
+  const risks: Array<{ level: 'high' | 'medium' | 'low'; text: string }> = [];
+
+  if (criticalIssues.length > 0) {
+    risks.push({ level: 'high', text: `${criticalIssues.length} critical integrity issue(s) detected — chain may be compromised` });
+  }
+  if (!report.allSignaturesValid) {
+    risks.push({ level: 'high', text: 'One or more signatures failed verification — possible tampering' });
+  }
+  if (report.issues.some((i) => i.type === 'REPLAY_DETECTED')) {
+    risks.push({ level: 'high', text: 'Replay attack detected — components double-counted across products' });
+  }
+  if (report.issues.some((i) => i.type === 'QUANTITY_EXCEEDS_UPSTREAM')) {
+    risks.push({ level: 'high', text: 'Material over-consumption — more claimed than produced upstream' });
+  }
+  if (nonCACountries.length > 3) {
+    risks.push({ level: 'medium', text: `Supply chain spans ${countries.length} countries — complex provenance increases verification difficulty` });
+  }
+  if (report.canadianContentPercent > 51 && report.canadianContentPercent < 60) {
+    risks.push({ level: 'medium', text: 'Canadian content is close to the 51% threshold — small cost changes could affect designation' });
+  }
+  if (warningIssues.length > 0 && criticalIssues.length === 0) {
+    risks.push({ level: 'low', text: `${warningIssues.length} warning(s) detected — review recommended but not blocking` });
+  }
+  if (risks.length === 0) {
+    risks.push({ level: 'low', text: 'No risk factors identified — chain is clean and fully verified' });
+  }
+
+  const overallRisk = risks.some((r) => r.level === 'high') ? 'high' : risks.some((r) => r.level === 'medium') ? 'medium' : 'low';
+  const riskColors = { high: '#ef4444', medium: '#f59e0b', low: '#10b981' };
+  const riskLabels = { high: 'High Risk', medium: 'Medium Risk', low: 'Low Risk' };
+
+  return (
+    <div style={{
+      margin: '1.25rem 0',
+      padding: '1.25rem',
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
+      borderRadius: 'var(--radius-lg)',
+      boxShadow: 'var(--shadow-sm)',
+    }}>
+      {/* Summary paragraph */}
+      <p style={{ fontSize: '0.9rem', lineHeight: 1.6, color: 'var(--color-text)', margin: '0 0 1rem' }}>
+        This product qualifies as <strong>{designationText}</strong> with{' '}
+        <strong>{report.canadianContentPercent.toFixed(2)}%</strong> Canadian content.
+        The supply chain spans <strong>{report.chainDepth} attestations</strong> across{' '}
+        <strong>{countries.length} {countries.length === 1 ? 'country' : 'countries'}</strong>
+        {nonCACountries.length > 0 && ` (non-Canadian: ${nonCACountries.join(', ')})`}.
+        {report.allSignaturesValid
+          ? ' All digital signatures verified successfully.'
+          : ' ⚠ One or more signatures failed verification.'}
+        {report.issues.length === 0
+          ? ' No integrity issues detected.'
+          : ` ${report.issues.length} issue(s) flagged.`}
+      </p>
+
+      {/* Risk Assessment */}
+      <div style={{
+        padding: '0.75rem 1rem',
+        borderRadius: 'var(--radius-md)',
+        background: overallRisk === 'high' ? '#fef2f2' : overallRisk === 'medium' ? '#fffbeb' : '#ecfdf5',
+        border: `1px solid ${overallRisk === 'high' ? '#fecaca' : overallRisk === 'medium' ? '#fde68a' : '#a7f3d0'}`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+          <span style={{
+            display: 'inline-block',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: riskColors[overallRisk],
+          }} />
+          <strong style={{ fontSize: '0.82rem', color: riskColors[overallRisk] }}>
+            {riskLabels[overallRisk]}
+          </strong>
+        </div>
+        {risks.map((risk, idx) => (
+          <div key={idx} style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginBottom: '0.2rem', paddingLeft: '1rem' }}>
+            • {risk.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function DesignationBanner({ designation }: { designation: ProvenanceReport['designation'] }) {
   const config = {
