@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { QRScanner } from './QRScanner';
 import { ProvenanceDisplay } from './ProvenanceDisplay';
 import { SearchPage } from './SearchPage';
+import { VerifyChainPage } from './VerifyChainPage';
 
-type Page = 'scan' | 'report' | 'search';
+type Page = 'scan' | 'report' | 'search' | 'verify';
 
 const UUID_HASH_REGEX = /^#\/report\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 
@@ -62,6 +63,12 @@ function App() {
         >
           Provenance Report
         </button>
+        <button
+          onClick={() => setCurrentPage('verify')}
+          className={`nav-btn ${currentPage === 'verify' ? 'active' : ''}`}
+        >
+          Verify Chain
+        </button>
       </nav>
 
       <main className="app-main">
@@ -74,6 +81,9 @@ function App() {
           )}
           {currentPage === 'report' && (
             <ReportPage productId={scannedProductId} onScanAgain={handleScanAgain} />
+          )}
+          {currentPage === 'verify' && (
+            <VerifyChainPage />
           )}
         </div>
       </main>
