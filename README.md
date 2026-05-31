@@ -8,19 +8,19 @@ Suppliers submit digitally signed attestations that form a Directed Acyclic Grap
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                              Docker Compose                                   │
+│                              Docker Compose                                  │
 │                                                                              │
-│  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  ┌─────────────┐  │
-│  │  Supplier UI   │  │  Purchaser UI  │  │   Backend    │  │  Verifier   │  │
-│  │  :3001         │  │  :3002         │  │   :8080      │  │  :8000      │  │
-│  │                │  │                │  │              │  │             │  │
-│  │ • Register     │  │ • QR Scan      │  │ • SQLite DB  │  │ • Stateless │  │
-│  │ • Compose &    │  │ • Search       │  │ • CRUD APIs  │  │ • Ed25519   │  │
-│  │   sign attests │  │ • Provenance   │  │ • Anomaly    │  │ • SHA-256   │  │
-│  │ • View history │  │   report       │  │   detection  │  │ • 10 checks │  │
-│  │ • QR codes     │  │ • Verify Chain │  │ • Supplier   │  │ • Z-score   │  │
-│  │                │  │ • Map view     │  │   registry   │  │   detection │  │
-│  └───────┬────────┘  └──┬─────────┬──┘  └──────┬───────┘  └──────┬──────┘  │
+│  ┌────────────────┐  ┌────────────────┐  ┌──────────────┐  ┌─────────────┐   │
+│  │  Supplier UI   │  │  Purchaser UI  │  │   Backend    │  │  Verifier   │   │
+│  │  :3001         │  │  :3002         │  │   :8080      │  │  :8000      │   │
+│  │                │  │                │  │              │  │             │   │
+│  │ • Register     │  │ • QR Scan      │  │ • SQLite DB  │  │ • Stateless │   │
+│  │ • Compose &    │  │ • Search       │  │ • CRUD APIs  │  │ • Ed25519   │   │
+│  │   sign attests │  │ • Provenance   │  │ • Anomaly    │  │ • SHA-256   │   │
+│  │ • View history │  │   report       │  │   detection  │  │ • 10 checks │   │
+│  │ • QR codes     │  │ • Verify Chain │  │ • Supplier   │  │ • Z-score   │   │
+│  │                │  │ • Map view     │  │   registry   │  │   detection │   │
+│  └───────┬────────┘  └──┬─────────┬──┘  └──────┬───────┘  └──────┬──────┘    │
 │          │              │         │             │                  │         │
 │          │   POST /api/*│         │ POST /verifier/verify          │         │
 │          └──────────────┴─────────┴─────────────┴──────────────────┘         │
